@@ -12,4 +12,9 @@
 // 监听出的错误，然后传给服务器错误日志
 //browserWindow 一直轮询observer保证在线
 
-// get   维持链接，获取program信息   
+// get   维持链接，获取program信息
+const agent = {
+    ajax: null
+};
+
+module.exports = agent;

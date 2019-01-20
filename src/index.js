@@ -1,34 +1,42 @@
+require('../test/click')(); //测试代码，可删
+
 const BrowserWindow = require('./element/browserWindow');
 const FrameWindow = require('./element/frameWindow');
 
-const {addEventListener, removeEventListener} = require('./utils/polyfill');
-const postMessage = require('./utils/postMessage');
+const {addListener, removeListener, parseObj} = require('./utils/polyfill');
+const post = require('./utils/postMessage');
 
 const {frameListLength} = require('./constants');
 
 const _ = require('underscore');
 
-require('../test/click')(); //测试代码，可删
 
 if (top === self) {
     const browserWindow = new BrowserWindow();
 
     const mapping = require('./register/browserWindow')(browserWindow);
 
-    // browserWindow.init(); 初始化
+    browserWindow.init();
 
-    addEventListener(top, 'message', function (event) {
-        const { namespace, type, argv } = window.JSON.parse(event.data);
+    window.onunload = function () {
+        browserWindow.destroy();
+    }
+    
+    window.onbeforeunload = function () {
+        browserWindow.destroy();
+    }
+
+    addListener(top, 'message', function (event) {
+        const { namespace, type, args } = parseObj(event.data);
 
         switch (namespace) {
             case 'agent':
-                mapping.agent[type].call(browserWindow, argv);
-
+                mapping.agent[type].call(browserWindow, args);
                 break;
             case 'browserWindow':
                 break;
             case 'frameWindow':
-                mapping.frameWindow[type].call(browserWindow, argv, event);
+                mapping.frameWindow[type].call(browserWindow, args, event);
 
                 console.log(browserWindow.frameTree);
 
@@ -39,43 +47,42 @@ if (top === self) {
 } else {
     const frameWindow = new FrameWindow();
 
-
     const mapping = require('./register/frameWindow')(frameWindow);
 
-    postMessage(parent, {
+    post(parent, {
         namespace: 'frameWindow',
         type: 'setWindowId',
-        argv: {
+        args: {
             windowId: frameWindow.symbol
         }
     });
 
-    addEventListener(window, 'load', function startSignIn() {
+    addListener(window, 'load', function startSignIn() {
         if (frameListLength() === 0) {
             frameWindow.signIn();
         }
 
-        removeEventListener(window, 'load', startSignIn);
+        removeListener(window, 'load', startSignIn);
     });
 
     window.onunload = function () {
-        postMessage(parent, {
+        post(parent, {
             namespace: 'frameWindow',
             type: 'removeChild',
-            argv: {
+            args: {
                 symbol: frameWindow.symbol
             }
         })
     }
 
-    addEventListener(window, 'message', function (event) {
-        const {namespace, type, argv} = window.JSON.parse(event.data);
+    addListener(window, 'message', function (event) {
+        const {namespace, type, args} = parseObj(event.data);
 
         switch (namespace) {
             case 'browserWindow':
                 break;
             case 'frameWindow':
-                mapping.frameWindow[type].call(frameWindow, argv, event);
+                mapping.frameWindow[type].call(frameWindow, args, event);
 
                 break;
         }

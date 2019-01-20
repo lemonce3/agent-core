@@ -1,5 +1,5 @@
-module.exports = function (windowObj, {namespace, type, argv}) {
+module.exports = function (windowObj, {namespace, type, args}) {
     windowObj.postMessage(window.JSON.stringify({
-        namespace, type, argv
+        namespace, type, args
     }), '*');
 }

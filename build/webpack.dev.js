@@ -14,6 +14,9 @@ application.devServer = {
 	port: 8003,
 	hot: false,
 	inline: false,
-	host: 'localhost'
+	host: 'localhost',
+	proxy: {
+		'/api': 'http://localhost:8090'
+	}
 };
 module.exports = application;

@@ -1,4 +1,4 @@
-const postMessage = require('../utils/postMessage');
+const post = require('../utils/postMessage');
 const {frameListLength} = require('../constants');
 const {updateChildren} = require('../utils/frameOperate');
 
@@ -10,10 +10,10 @@ module.exports = function FrameWindow() {
     this.watcher = null;
     
     this.signIn = function () {
-        postMessage(parent, {
+        post(parent, {
             namespace: 'frameWindow',
             type: 'setChildren',
-            argv: {
+            args: {
                 symbol: this.symbol,
                 children: this.children
             }
@@ -27,6 +27,10 @@ module.exports = function FrameWindow() {
     }
 
     this.setChildren = function ({symbol, children}) {
+        if (this.symbol === symbol) {
+            return;
+        }
+
         if (!this.children) {
             this.children = {};
         }
@@ -41,6 +45,7 @@ module.exports = function FrameWindow() {
     }
 
     this.removeChild = function ({symbol}) {
+        
         if (this.children && this.children[symbol]) {
             delete this.children[symbol];
 

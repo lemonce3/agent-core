@@ -1,0 +1,17 @@
+
+{
+  "presets": [
+    "stage-0",
+    [
+      "env", {
+        "modules": false,
+        "targets": {
+          "browsers": ["ie 8-11"]
+        }
+      }
+    ]
+  ],
+  "plugins": [
+    "transform-runtime"
+  ]
+  }

@@ -1,9 +1,4 @@
 'use strict';
-
-const webpack = require('webpack');
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-
 const application = require('./webpack.base');
 
 application.mode = 'development';
@@ -14,9 +9,9 @@ application.devServer = {
 	port: 8003,
 	hot: false,
 	inline: false,
-	host: 'localhost',
+	host: '192.168.31.234',
 	proxy: {
-		'/api': 'http://localhost:8090'
+		'/api': 'http://192.168.31.234:8090'
 	}
 };
 module.exports = application;

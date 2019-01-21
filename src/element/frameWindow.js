@@ -39,7 +39,7 @@ module.exports = function FrameWindow() {
             parent: this.symbol, children
         }
 
-        if (frameListLength() === _.keys(this.children).length) {
+        if (frameListLength() === _.keys(this.children).length) { //可能出异常，所以可能要去掉判断！！
             this.signIn();
         }
     }

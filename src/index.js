@@ -10,7 +10,6 @@ const {frameListLength} = require('./constants');
 
 const _ = require('underscore');
 
-
 if (top === self) {
     const browserWindow = new BrowserWindow();
 

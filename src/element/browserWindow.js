@@ -1,14 +1,14 @@
 const {updateChildren} = require('../utils/frameOperate');
 const {addListener, dispatch, parseObj} = require('../utils/polyfill');
+const create = require('../utils/ajax');
 
 const agent = require('./agent');
 
-const create = require('../utils/ajax');
+const addProgram = require('./program');
 
 module.exports = function BrowserWindow() {
     this.agentId = null;
     this.browserWindowId = null;
-    this.program = null;
 
     this.frameTree = null;
 
@@ -45,6 +45,8 @@ module.exports = function BrowserWindow() {
             parent: this.browserWindowId, children
         };
 
+        //要不要加判断，然后触发finished事件？
+
         if (this.watcher) {
             clearInterval(this.watcher);
         }
@@ -53,7 +55,9 @@ module.exports = function BrowserWindow() {
     }
 
     this.removeChild = function ({symbol}) {
-        delete this.frameTree[symbol];
+        if (this.frameTree) {
+            delete this.frameTree[symbol];
+        }
     }
 
     this.setAgentId = function (argv) {
@@ -78,7 +82,10 @@ module.exports = function BrowserWindow() {
                 const {id, program} = parseObj(res);
 
                 this.browserWindowId = id;
-                this.program = program;
+
+                if (program) {
+                    addProgram(program);
+                }
 
                 this.keepBrowserWindowAlive();
             },
@@ -100,12 +107,21 @@ module.exports = function BrowserWindow() {
             agent.ajax({
                 method: 'get',
                 url: `/window/${that.browserWindowId}?timestamp=${new Date().getTime()}`,
-                success: that.keepBrowserWindowAlive,
+                success: function (res) {
+                    const {program} = parseObj(res);
+    
+                    if (program) {
+                        addProgram(program);
+                    }
+    
+                    this.keepBrowserWindowAlive();
+                },
                 error: that.init,
                 context: that
             })
-        }, 9000);
+        }, 50);
 
+        // 让我们把这个参数抽出来
     }
 
     this.destroy = function () {

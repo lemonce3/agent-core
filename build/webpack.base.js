@@ -22,7 +22,6 @@ module.exports = {
 				test: /\.js$/,
                 exclude: /node_modules/,
                 use: [
-                    // 'es3ify-loader',
                     'babel-loader'
                 ],
 

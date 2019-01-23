@@ -1,5 +1,6 @@
 const {updateChildren} = require('../utils/frameOperate');
 const {addListener, dispatch, parseObj} = require('../utils/polyfill');
+const objectOperate = require('../utils/basicOperate');
 const create = require('../utils/ajax');
 
 const agent = require('./agent');
@@ -79,7 +80,6 @@ module.exports = function BrowserWindow(windowObj) {
             opener: this.windowObj.opener
         };
 
-        // 传meta {title, href, opener}
         agent.ajax({
             method: 'post',
             url: '/window',
@@ -98,7 +98,7 @@ module.exports = function BrowserWindow(windowObj) {
         })
     }
 
-    this.keepBrowserWindowAlive = function () {
+    this.keepBrowserWindowAlive = function (delay = 50) {
         const that = this;
 
         if (this.keepAliveWatcher) {
@@ -116,12 +116,12 @@ module.exports = function BrowserWindow(windowObj) {
                         changeProgram(program, that);
                     }
     
-                    this.keepBrowserWindowAlive();
+                    this.keepBrowserWindowAlive(res.timeout);
                 },
                 error: that.init,
                 context: that
             })
-        }, 50);
+        }, delay);
 
         // 让我们把这个参数抽出来
     }
@@ -137,32 +137,6 @@ module.exports = function BrowserWindow(windowObj) {
     }
 
     this.lang = {
-        object: {
-            get: function(propKey) {
-                return this[propKey];
-            },
-            set: function(propKey, value) {
-                try {
-    
-                    this[propKey] = value;
-                } catch (e) {
-                    throw new Error('The operate to set prop fail.');
-                }
-    
-                return true;
-            },
-            call: function(func) {
-                func();
-            },
-            getAndCall: function(propKey) {
-                const func = this[propKey];
-    
-                if (typeof func !== 'function') {
-                    throw new Error('The prop is not a function.');
-                }
-    
-                return func();
-            }
-        }
+        object: objectOperate
     }
 }

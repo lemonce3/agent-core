@@ -11,7 +11,7 @@ const {frameListLength} = require('./constants');
 const _ = require('underscore');
 
 if (top === self) {
-    const browserWindow = new BrowserWindow(window);
+    const browserWindow = module.exports = new BrowserWindow(window);
     const mapping = require('./register/browserWindow')(browserWindow);
 
     browserWindow.init();

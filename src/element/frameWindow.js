@@ -2,6 +2,7 @@ const post = require('../utils/postMessage');
 const {frameListLength} = require('../constants');
 const {updateChildren} = require('../utils/frameOperate');
 const {generateSymbol} = require('../utils/util');
+const objectOperate = require('../utils/basicOperate');
 
 const _ = require('underscore');
 
@@ -55,5 +56,9 @@ module.exports = function FrameWindow(windowObj) {
 
             this.signIn();
         }
+    }
+
+    this.lang = {
+        object: objectOperate
     }
 }

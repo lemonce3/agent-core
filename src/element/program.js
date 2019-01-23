@@ -4,7 +4,7 @@ const agent = require('./agent');
 const {generateSymbol} = require('../utils/util');
 
 const programController = {
-    programId: null,
+    programId: '',
     browserWindow: null,
     resultPool: {}
 }
@@ -22,7 +22,7 @@ module.exports = function changeProgram({id, name, args}, browserWindow) {
 
 // 存，取，调用（hash），结果对象池（browserWindow和agent过期或不存在了，返回结果没了，不用管）;
 function executeProgram({name, args}) {
-    const url = `/window/${programController.browserWindow.browserWindowId}/program/${programController.programId}}`;
+    const url = `/window/${programController.browserWindow.browserWindowId}/program/${programController.programId}/exit`;
     const callArr = name.split('.');
     
     let result;
@@ -30,14 +30,16 @@ function executeProgram({name, args}) {
     try {
         const executeObj = getExecutionObj(callArr);
 
-        result = executeObj.call(programController[args.target], args.value); //可能会变化的
+        result = executeObj.call(programController.browserWindow, args[0]); //可能会变化的
 
     } catch (e) {
         agent.ajax({
             method: 'post',
             url,
             send: JSON.stringify({
-                error: e.message
+                error: {
+                    message: e.message
+                }
             })
         });
 
@@ -101,8 +103,6 @@ function setResultMapping(callArr, result) {
         const resultSymbol = generateSymbol();
 
         value = resultSymbol;
-
-        console.log(mappingObj);
 
         _.each(callArr, function (item) {
             if (mappingObj[item]) {

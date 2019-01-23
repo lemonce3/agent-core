@@ -11,8 +11,7 @@ const {frameListLength} = require('./constants');
 const _ = require('underscore');
 
 if (top === self) {
-    const browserWindow = new BrowserWindow();
-
+    const browserWindow = new BrowserWindow(window);
     const mapping = require('./register/browserWindow')(browserWindow);
 
     browserWindow.init();
@@ -28,24 +27,14 @@ if (top === self) {
     addListener(top, 'message', function (event) {
         const { namespace, type, args } = parseObj(event.data);
 
-        switch (namespace) {
-            case 'agent':
-                mapping.agent[type].call(browserWindow, args);
-                break;
-            case 'browserWindow':
-                break;
-            case 'frameWindow':
-                mapping.frameWindow[type].call(browserWindow, args, event);
+        mapping[namespace][type].call(browserWindow, args, event);
 
-                console.log(browserWindow.frameTree);
-
-                break;
-        }
+        console.log(browserWindow.frameTree);
     });
 
 } else {
-    const frameWindow = new FrameWindow();
-
+    const frameWindow = new FrameWindow(window);
+    
     const mapping = require('./register/frameWindow')(frameWindow);
 
     post(parent, {
@@ -77,14 +66,7 @@ if (top === self) {
     addListener(window, 'message', function (event) {
         const {namespace, type, args} = parseObj(event.data);
 
-        switch (namespace) {
-            case 'browserWindow':
-                break;
-            case 'frameWindow':
-                mapping.frameWindow[type].call(frameWindow, args, event);
-
-                break;
-        }
+        mapping[namespace][type].call(frameWindow, args, event);
     });
 }
 

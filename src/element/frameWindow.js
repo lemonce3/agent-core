@@ -1,11 +1,15 @@
 const post = require('../utils/postMessage');
 const {frameListLength} = require('../constants');
 const {updateChildren} = require('../utils/frameOperate');
+const {generateSymbol} = require('../utils/util');
 
 const _ = require('underscore');
 
-module.exports = function FrameWindow() {
+module.exports = function FrameWindow(windowObj) {
     this.symbol = generateSymbol();
+
+    this.windowObj = windowObj;
+
     this.children = null;
     this.watcher = null;
     
@@ -52,8 +56,4 @@ module.exports = function FrameWindow() {
             this.signIn();
         }
     }
-}
-
-function generateSymbol() {
-    return Math.random().toString(36).substr(2);
 }

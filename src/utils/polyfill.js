@@ -34,6 +34,7 @@ function parseObj(data) {
         } catch (e) {
             return data;
         }
+        
         return JSON.parse(data);
     } else {
         return {};

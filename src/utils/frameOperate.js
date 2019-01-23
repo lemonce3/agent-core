@@ -1,5 +1,5 @@
 const {TAGLIST, frameListLength} = require('../constants');
-const fillArray = require('./fillArray');
+const {fillArray} = require('./util');
 const _ = require('underscore');
 
 const tagList = TAGLIST.join(',');

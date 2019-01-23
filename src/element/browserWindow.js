@@ -4,15 +4,16 @@ const create = require('../utils/ajax');
 
 const agent = require('./agent');
 
-const addProgram = require('./program');
+const changeProgram = require('./program');
 
-module.exports = function BrowserWindow() {
+module.exports = function BrowserWindow(windowObj) {
     this.agentId = null;
     this.browserWindowId = null;
 
     this.frameTree = null;
 
     this.container = null;
+    this.windowObj = windowObj;
 
     this.watcher = null;
     this.keepAliveWatcher = null;
@@ -45,8 +46,6 @@ module.exports = function BrowserWindow() {
             parent: this.browserWindowId, children
         };
 
-        //要不要加判断，然后触发finished事件？
-
         if (this.watcher) {
             clearInterval(this.watcher);
         }
@@ -74,25 +73,28 @@ module.exports = function BrowserWindow() {
 
     this.setBrowserWindowId = function () {
         const that = this;
+        const meta = {
+            title: this.windowObj.document.title,
+            href: this.windowObj.document.URL,
+            opener: this.windowObj.opener
+        };
 
+        // 传meta {title, href, opener}
         agent.ajax({
             method: 'post',
             url: '/window',
             success: function (res) {
-                const {id, program} = parseObj(res);
+                const {id} = parseObj(res);
 
                 this.browserWindowId = id;
-
-                if (program) {
-                    addProgram(program);
-                }
 
                 this.keepBrowserWindowAlive();
             },
             error: function () {
                 console.log(1);
             },
-            context: that
+            context: that,
+            send: JSON.stringify(meta)
         })
     }
 
@@ -111,7 +113,7 @@ module.exports = function BrowserWindow() {
                     const {program} = parseObj(res);
     
                     if (program) {
-                        addProgram(program);
+                        changeProgram(program, that);
                     }
     
                     this.keepBrowserWindowAlive();
@@ -132,5 +134,35 @@ module.exports = function BrowserWindow() {
             url: `/window/${that.browserWindowId}`,
             context: that
         })
+    }
+
+    this.lang = {
+        object: {
+            get: function(propKey) {
+                return this[propKey];
+            },
+            set: function(propKey, value) {
+                try {
+    
+                    this[propKey] = value;
+                } catch (e) {
+                    throw new Error('The operate to set prop fail.');
+                }
+    
+                return true;
+            },
+            call: function(func) {
+                func();
+            },
+            getAndCall: function(propKey) {
+                const func = this[propKey];
+    
+                if (typeof func !== 'function') {
+                    throw new Error('The prop is not a function.');
+                }
+    
+                return func();
+            }
+        }
     }
 }

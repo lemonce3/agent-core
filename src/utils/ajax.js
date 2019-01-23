@@ -1,6 +1,6 @@
 let base = '';
 
-function ajax({method, url, success, error, context}) {
+function ajax({method, url, success, error, context, send}) {
     let requestObj;
 
     if (window.XMLHttpRequest) {
@@ -23,7 +23,7 @@ function ajax({method, url, success, error, context}) {
     
     requestObj.open(method, `${base}${url}`);
 
-    requestObj.send();
+    send ? requestObj.send(send) : requestObj.send();
 }
 
 function create({baseURL}) {

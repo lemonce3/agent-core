@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/lemonce3/agent#readme",
   "dependencies": {
+    "bluebird": "^3.5.3",
     "underscore": "1.1.7"
   }
 }

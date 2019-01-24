@@ -1,4 +1,6 @@
-require('../test/click')(); //测试代码，可删
+require('../test/click')();
+const objectOperate = require('../test/test');
+//测试代码，可删
 
 const BrowserWindow = require('./element/browserWindow');
 const FrameWindow = require('./element/frameWindow');
@@ -11,14 +13,16 @@ const {frameListLength} = require('./constants');
 const _ = require('underscore');
 
 if (top === self) {
-    const browserWindow = module.exports = new BrowserWindow(window);
+    const browserWindow = new BrowserWindow(window);
     const mapping = require('./register/browserWindow')(browserWindow);
+
+    browserWindow.test = objectOperate; //测试
 
     browserWindow.init();
 
-    window.onunload = function () {
-        browserWindow.destroy();
-    }
+    // window.onunload = function () {
+    //     browserWindow.destroy();
+    // }
     
     window.onbeforeunload = function () {
         browserWindow.destroy();
@@ -68,5 +72,13 @@ if (top === self) {
 
         mapping[namespace][type].call(frameWindow, args, event);
     });
+}
+
+module.exports = function (register, config) {
+    if (!register.install) {
+        throw new Error('You must have install function');
+    }
+
+    register.install(BrowserWindow.prototype, config);
 }
 

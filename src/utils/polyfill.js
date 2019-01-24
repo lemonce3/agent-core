@@ -34,14 +34,21 @@ function parseObj(data) {
         } catch (e) {
             return data;
         }
-        
+
         return JSON.parse(data);
     } else {
         return {};
     }
 }
 
+function getPromise() {
+    if (window.Promise) {
+        return Promise
+    }
+
+    return require("bluebird");
+}
 
 module.exports = {
-    addListener, removeListener, parseObj, dispatch
+    addListener, removeListener, parseObj, dispatch, getPromise
 };

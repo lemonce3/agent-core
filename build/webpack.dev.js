@@ -9,9 +9,9 @@ application.devServer = {
 	port: 8003,
 	hot: false,
 	inline: false,
-	host: '192.168.31.234',
+	host: 'localhost',
 	proxy: {
-		'/api': 'http://192.168.31.234:8090'
+		'/api': 'http://localhost:8090'
 	}
 };
 module.exports = application;

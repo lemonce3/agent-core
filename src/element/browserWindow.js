@@ -1,9 +1,8 @@
 const {updateChildren} = require('../utils/frameOperate');
 const {addListener, dispatch, parseObj} = require('../utils/polyfill');
-const objectOperate = require('../utils/basicOperate');
 const create = require('../utils/ajax');
 
-const agent = require('./agent');
+const library = require('../library');
 
 const changeProgram = require('./program');
 
@@ -12,6 +11,7 @@ module.exports = function BrowserWindow(windowObj) {
     this.browserWindowId = null;
 
     this.frameTree = null;
+    this.library = library;
 
     this.container = null;
     this.windowObj = windowObj;
@@ -65,13 +65,14 @@ module.exports = function BrowserWindow(windowObj) {
         
         this.agentId = argv[0];
 
-        agent.ajax = create({
+        this.library.ajax = create({
             baseURL: '/api/agent/' + argv[0]
         });
 
         this.setBrowserWindowId();
     }
 
+    // 设置来源windowId
     this.setBrowserWindowId = function () {
         const that = this;
         const meta = {
@@ -80,7 +81,7 @@ module.exports = function BrowserWindow(windowObj) {
             opener: this.windowObj.opener
         };
 
-        agent.ajax({
+        this.library.ajax({
             method: 'post',
             url: '/window',
             success: function (res) {
@@ -106,7 +107,7 @@ module.exports = function BrowserWindow(windowObj) {
         }
 
         this.keepAliveWatcher = setTimeout(function () {
-            agent.ajax({
+            that.library.ajax({
                 method: 'get',
                 url: `/window/${that.browserWindowId}?timestamp=${new Date().getTime()}`,
                 success: function (res) {
@@ -115,28 +116,22 @@ module.exports = function BrowserWindow(windowObj) {
                     if (program) {
                         changeProgram(program, that);
                     }
-    
+
                     this.keepBrowserWindowAlive(res.timeout);
                 },
                 error: that.init,
                 context: that
             })
         }, delay);
-
-        // 让我们把这个参数抽出来
     }
 
     this.destroy = function () {
         const that = this;
 
-        agent.ajax({
+        this.library.ajax({
             method: 'delete',
             url: `/window/${that.browserWindowId}`,
             context: that
         })
-    }
-
-    this.lang = {
-        object: objectOperate
     }
 }

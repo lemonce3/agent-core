@@ -4,9 +4,13 @@ function ajax({method, url, success, error, context, send}, base = baseSet) {
     let requestObj;
 
     if (window.XMLHttpRequest) {
-        requestObj = new XMLHttpRequest();
+        const xhr = window.XMLHttpRequest;
+
+        requestObj = new xhr();
     } else {
-        requestObj = new ActiveXObject('Microsoft.XMLHTTP');
+        const activeX = window.ActiveXObject;
+
+        requestObj = new activeX('Microsoft.XMLHTTP');
     }
 
     requestObj.onreadystatechange = function () {
@@ -37,7 +41,6 @@ function create({baseURL}) {
 // 测试program
 // if (top === self) {
 //     setTimeout(function () {
-
 //         ajax({
 //             method: 'post',
 //             url: `/api/master`,
@@ -60,7 +63,6 @@ function create({baseURL}) {
 //             }
 //         }, '')
 //     }, 2000);
-
 // }
 
 module.exports = create;

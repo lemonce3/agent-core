@@ -1,6 +1,6 @@
 const _ = require('underscore');
 
-const agent = require('./agent');
+const library = require('../library');
 const {generateSymbol} = require('../utils/util');
 
 const programController = {
@@ -17,23 +17,35 @@ module.exports = function changeProgram({id, name, args}, browserWindow) {
     programController.programId = id;
     programController.browserWindow = browserWindow;
 
+    console.log(programController.browserWindow.test)
+
     executeProgram({name, args});
 }
 
-// 存，取，调用（hash），结果对象池（browserWindow和agent过期或不存在了，返回结果没了，不用管）;
 function executeProgram({name, args}) {
     const url = `/window/${programController.browserWindow.browserWindowId}/program/${programController.programId}/exit`;
     const callArr = name.split('.');
-    
-    let result;
-    
-    try {
-        const executeObj = getExecutionObj(callArr);
 
-        result = executeObj.call(programController.browserWindow, args[0]); //可能会变化的
+    new library.promise(function (resolve, reject) {
+        try {
+            const executeObj = getExecutionObj(callArr);
 
-    } catch (e) {
-        agent.ajax({
+            resolve(executeObj.call(programController.browserWindow, args[0]));
+        } catch (e) {
+            reject(new Error(e.message));
+        }
+    }).then(function (result) {
+        console.log(result);
+
+        library.ajax({
+            method: 'post',
+            url,
+            send: JSON.stringify({
+                returnValue: setResultMapping(callArr, result)
+            })
+        });
+    }).catch(function (e) {
+        library.ajax({
             method: 'post',
             url,
             send: JSON.stringify({
@@ -42,20 +54,6 @@ function executeProgram({name, args}) {
                 }
             })
         });
-
-        return false;
-    }
-
-    result = setResultMapping(callArr, result);
-
-    console.log(programController.resultPool);
-
-    agent.ajax({
-        method: 'post',
-        url,
-        send: JSON.stringify({
-            returnValue: result
-        })
     });
 }
 
@@ -71,8 +69,7 @@ function getExecutionObj(callArr) {
         return programResult.executeObj;
     }
 
-
-    throw new Error('The function is not exist.')
+    throw new Error('The function is not exist.');
 }
 
 function isExist(callArr, executeObj) {
@@ -94,30 +91,44 @@ function isExist(callArr, executeObj) {
 }
 
 function setResultMapping(callArr, result) {
-    const resultType = typeof result;
     let value = result;
-    let mappingObj = programController.resultPool;
 
-    //结果为树状的；
-    if (resultType === 'object' || resultType === 'function') {
-        const resultSymbol = generateSymbol();
+    const isObject = typeof result === 'object';
+    const isFunction = typeof result === 'function';
 
-        value = resultSymbol;
+    //可能是一个promise对象
+    if (isObject) {
+        try {
+            value = JSON.stringify(result);
+        } catch (e) {
+            value = generateResultTree(callArr, result);
+        }
+    }
 
-        _.each(callArr, function (item) {
-            if (mappingObj[item]) {
-                mappingObj = mappingObj[item];
-            } else {
-                mappingObj = mappingObj[item] = {};
-            }
-        });
-
-        mappingObj[resultSymbol] = result;
+    if (isFunction) {
+        value = generateResultTree(callArr, result)
     }
 
     return {
-        isObject: resultType === 'object',
-        isFunction: resultType === 'function',
+        isObject,
+        isFunction,
         value
     }
+}
+
+function generateResultTree(callArr, result) {
+    const resultSymbol = generateSymbol();
+    let mappingObj = programController.resultPool;
+
+    _.each(callArr, function (item) {
+        if (mappingObj[item]) {
+            mappingObj = mappingObj[item];
+        } else {
+            mappingObj = mappingObj[item] = {};
+        }
+    });
+
+    mappingObj[resultSymbol] = result;
+
+    return resultSymbol;
 }

@@ -27,8 +27,8 @@ function updateChildren(children, callback, obj) {
 
         _.each(keys, function (item) {
             if (_.indexOf(frameList, item) === -1) {
-                callback.call(obj, {
-                    symbol: item
+                callback({
+                    symbol: item 
                 });
             }
         });

@@ -5,15 +5,13 @@ const {generateSymbol} = require('../utils/util');
 
 const _ = require('underscore');
 
-module.exports = function FrameWindow(windowObj) {
+module.exports = function FrameWindow() {
     this.symbol = generateSymbol();
-
-    this.windowObj = windowObj;
 
     this.children = null;
     this.watcher = null;
     
-    this.signIn = function () {
+    this.signIn = () => {
         post(parent, {
             namespace: 'frameWindow',
             type: 'setChildren',
@@ -30,7 +28,7 @@ module.exports = function FrameWindow(windowObj) {
         this.watcher = updateChildren(this.children, this.removeChild, this);
     }
 
-    this.setChildren = function ({symbol, children}) {
+    this.setChildren = ({symbol, children}) => {
         if (this.symbol === symbol) {
             return;
         }
@@ -48,7 +46,7 @@ module.exports = function FrameWindow(windowObj) {
         }
     }
 
-    this.removeChild = function ({symbol}) {
+    this.removeChild = ({symbol}) => {
         
         if (this.children && this.children[symbol]) {
             delete this.children[symbol];

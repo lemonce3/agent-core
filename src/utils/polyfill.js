@@ -45,7 +45,6 @@ function getPromise() {
     if (window.Promise) {
         return Promise
     }
-
     return require("bluebird");
 }
 

@@ -1,13 +1,18 @@
 const _ = require('underscore');
 
-const library = require('../library');
+const agent = require('../agent');
+const {getPromise} = require('../utils/polyfill');
 const {generateSymbol} = require('../utils/util');
 
-const programController = {
-    programId: '',
-    browserWindow: null,
-    resultPool: {}
+function init() {
+    return {
+        programId: '',
+        browserWindow: null,
+        // resultPool: {}
+    }
 }
+
+const programController = init();
 
 module.exports = function changeProgram({id, name, args}, browserWindow) {
     if (programController.programId === id) {
@@ -17,43 +22,32 @@ module.exports = function changeProgram({id, name, args}, browserWindow) {
     programController.programId = id;
     programController.browserWindow = browserWindow;
 
-    console.log(programController.browserWindow.test)
-
     executeProgram({name, args});
 }
 
 function executeProgram({name, args}) {
     const url = `/window/${programController.browserWindow.browserWindowId}/program/${programController.programId}/exit`;
     const callArr = name.split('.');
+    const promise = getPromise();
 
-    new library.promise(function (resolve, reject) {
-        try {
-            const executeObj = getExecutionObj(callArr);
+    new promise(function (resolve, reject) {
+        const executeObj = getExecutionObj(callArr);
 
-            resolve(executeObj.call(programController.browserWindow, args[0]));
-        } catch (e) {
-            reject(new Error(e.message));
-        }
+        resolve(executeObj(args[0]));
     }).then(function (result) {
-        console.log(result);
-
-        library.ajax({
-            method: 'post',
-            url,
-            send: JSON.stringify({
-                returnValue: setResultMapping(callArr, result)
-            })
+        agent.request.post(url, JSON.stringify({
+            returnValue: setResultMapping(callArr, result)
+        })).then(function () {
+            init();
+        }).catch(function () {
+            init();
         });
     }).catch(function (e) {
-        library.ajax({
-            method: 'post',
-            url,
-            send: JSON.stringify({
-                error: {
-                    message: e.message
-                }
-            })
-        });
+        agent.request.post(url, JSON.stringify({
+            error: {
+                message: e.message
+            }
+        }));
     });
 }
 
@@ -91,23 +85,23 @@ function isExist(callArr, executeObj) {
 }
 
 function setResultMapping(callArr, result) {
-    let value = result;
+    let value = JSON.stringify(result);
 
     const isObject = typeof result === 'object';
     const isFunction = typeof result === 'function';
 
-    //可能是一个promise对象
-    if (isObject) {
-        try {
-            value = JSON.stringify(result);
-        } catch (e) {
-            value = generateResultTree(callArr, result);
-        }
-    }
+    //全部string化？
+    // if (isObject) {
+    //     try {
+    //         value = JSON.stringify(result);
+    //     } catch (e) {
+    //         value = generateResultTree(callArr, result);
+    //     }
+    // }
 
-    if (isFunction) {
-        value = generateResultTree(callArr, result)
-    }
+    // if (isFunction) {
+    //     value = generateResultTree(callArr, result)
+    // }
 
     return {
         isObject,

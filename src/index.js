@@ -1,5 +1,4 @@
 require('../test/click')();
-const objectOperate = require('../test/test');
 //测试代码，可删
 
 const BrowserWindow = require('./element/browserWindow');
@@ -10,13 +9,9 @@ const post = require('./utils/postMessage');
 
 const {frameListLength} = require('./constants');
 
-const _ = require('underscore');
-
 if (top === self) {
     const browserWindow = new BrowserWindow(window);
     const mapping = require('./register/browserWindow')(browserWindow);
-
-    browserWindow.test = objectOperate; //测试
 
     browserWindow.init();
 
@@ -31,13 +26,13 @@ if (top === self) {
     addListener(top, 'message', function (event) {
         const { namespace, type, args } = parseObj(event.data);
 
-        mapping[namespace][type].call(browserWindow, args, event);
+        mapping[namespace][type](args, event);
 
         console.log(browserWindow.frameTree);
     });
 
 } else {
-    const frameWindow = new FrameWindow(window);
+    const frameWindow = new FrameWindow();
     
     const mapping = require('./register/frameWindow')(frameWindow);
 
@@ -70,15 +65,8 @@ if (top === self) {
     addListener(window, 'message', function (event) {
         const {namespace, type, args} = parseObj(event.data);
 
-        mapping[namespace][type].call(frameWindow, args, event);
+        mapping[namespace][type](args, event);
     });
 }
 
-module.exports = function (register, config) {
-    if (!register.install) {
-        throw new Error('You must have install function');
-    }
-
-    register.install(BrowserWindow.prototype, config);
-}
-
+module.exports = require('./agent.js');

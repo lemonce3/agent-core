@@ -9,7 +9,7 @@ application.devServer = {
 	port: 8003,
 	hot: false,
 	inline: false,
-	host: 'localhost',
+	host: '0.0.0.0',
 	proxy: {
 		'/api': 'http://localhost:8090'
 	}

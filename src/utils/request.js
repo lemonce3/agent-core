@@ -93,8 +93,6 @@ function create(baseURL) {
 //     }, 2000);
 // }
 
-// 做一些其他的封装，有点奇怪
-
 module.exports = {
     create, request: new Request()
 };

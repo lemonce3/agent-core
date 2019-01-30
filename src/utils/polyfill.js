@@ -27,6 +27,14 @@ function dispatch(eventName, eventInfo){
     }
 }
 
+function getComputedStyle(dom) {
+    if (dom.getComputedStyle) {
+        return dom.getComputedStyle;
+    } else {
+        return dom.currentStyle;
+    }
+}
+
 function parseObj(data) {
     if (JSON) {
         try {
@@ -49,5 +57,5 @@ function getPromise() {
 }
 
 module.exports = {
-    addListener, removeListener, parseObj, dispatch, getPromise
+    addListener, removeListener, parseObj, dispatch, getPromise, getComputedStyle
 };

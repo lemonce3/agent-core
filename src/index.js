@@ -1,5 +1,6 @@
 require('../test/click')();
 //测试代码，可删
+require('./overwrite/index');
 
 const BrowserWindow = require('./element/browserWindow');
 const FrameWindow = require('./element/frameWindow');
@@ -10,21 +11,21 @@ const post = require('./utils/postMessage');
 const {frameListLength} = require('./constants');
 
 if (top === self) {
-    const browserWindow = new BrowserWindow(window);
+    const browserWindow = new BrowserWindow();
     const mapping = require('./register/browserWindow')(browserWindow);
 
     browserWindow.init();
 
-    // window.onunload = function () {
-    //     browserWindow.destroy();
-    // }
-    
     window.onbeforeunload = function () {
         browserWindow.destroy();
     }
 
     addListener(top, 'message', function (event) {
         const { namespace, type, args } = parseObj(event.data);
+
+        if (!mapping[namespace]) {
+            return false;
+        }
 
         mapping[namespace][type](args, event);
 
@@ -64,9 +65,13 @@ if (top === self) {
 
     addListener(window, 'message', function (event) {
         const {namespace, type, args} = parseObj(event.data);
+        
+        if (!mapping[namespace]) {
+            return false;
+        }
 
         mapping[namespace][type](args, event);
     });
 }
 
-module.exports = require('./agent.js');
+module.exports = require('./element/agent.js');

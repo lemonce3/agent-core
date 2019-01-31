@@ -69,27 +69,14 @@ function create(baseURL) {
 // 测试program
 // if (top === self) {
 //     setTimeout(function () {
-//         ajax({
-//             method: 'post',
-//             url: `/api/master`,
-//             success: function(res) {
-//                 ajax({
-//                     method: 'post',
-//                     url: `/api/master/${JSON.parse(res).id}/agent`,
-//                     success: function () {
-//                         console.log(JSON.parse(res).id);
-    
-//                         setInterval(function () {
-//                             ajax({
-//                                 method: 'get',
-//                                 url: `/api/master/${JSON.parse(res).id}`
-//                             }, '')
-//                         }, 1000);
-//                     }
-//                 }, '')
-    
-//             }
-//         }, '')
+//         const xhr = new Request();
+//         xhr.post(`/api/master`, null).then((res) => {
+//             xhr.post(`/api/master/${JSON.parse(res).id}/agent`, null).then((res1) => {
+//                 setInterval(function () {
+//                     xhr.get(`/api/master/${JSON.parse(res).id}`)
+//                 }, 1000);
+//             })
+//         })
 //     }, 2000);
 // }
 

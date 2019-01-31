@@ -23,7 +23,7 @@ if (top === self) {
     addListener(top, 'message', function (event) {
         const { namespace, type, args } = parseObj(event.data);
 
-        if (!mapping[namespace]) {
+        if (!mapping[namespace][type]) {
             return false;
         }
 
@@ -42,6 +42,14 @@ if (top === self) {
         type: 'setWindowId',
         args: {
             windowId: frameWindow.symbol
+        }
+    });
+
+    post(top, {
+        namespace: 'browserWindow',
+        type: 'initSource',
+        args: {
+            hash: frameWindow.symbol
         }
     });
 
@@ -66,7 +74,7 @@ if (top === self) {
     addListener(window, 'message', function (event) {
         const {namespace, type, args} = parseObj(event.data);
         
-        if (!mapping[namespace]) {
+        if (!mapping[namespace][type]) {
             return false;
         }
 

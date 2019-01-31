@@ -1,11 +1,9 @@
 const {updateChildren} = require('../utils/frameOperate');
-const {addListener, parseObj, getPromise, getComputedStyle, removeListener} = require('../utils/polyfill');
+const {addListener, parseObj, getComputedStyle} = require('../utils/polyfill');
 const {create} = require('../utils/request');
-const {generateSymbol, getDomRect, getSubSelector} = require('../utils/util');
+const {generateSymbol, getDomRect} = require('../utils/util');
 
 const _ = require('underscore');
-const promise = getPromise();
-const post = require('../utils/postMessage');
 
 const agent = require('./agent');
 const changeProgram = require('./program');
@@ -23,6 +21,7 @@ module.exports = function BrowserWindow() {
     this.watcher = null;
     this.keepAliveWatcher = null;
 
+    this.sourceMapping = {};
     this.domMapping = {};
 
     this.init = () => {
@@ -116,6 +115,27 @@ module.exports = function BrowserWindow() {
         agent.request.delete(`/window/${this.browserWindowId}`);
     }
 
+    this.isExist = (hash, message) => {
+        hash = this.computedFrameList(this.frameTree)[0];
+        const source = this.sourceMapping[hash];
+
+        if (!source || _.indexOf(this.computedFrameList(this.frameTree), hash) === -1) {
+            throw new Error(message)
+        }
+
+        return source;
+    }
+
+    this.initSourceMapping = ({hash}, {source}) => {
+        this.sourceMapping[hash] = source;
+    }
+
+    this.executeFrameMethod = (hash, callerArr, args) => {
+        return communicateFramework(this.isExist(hash, 'The function is not exist.'), 'executeMethod', {
+            callerArr, args
+        });
+    }
+
     this.computedFrameList = (list, arr = []) =>{
         const keys = _.keys(list);
 
@@ -174,151 +194,94 @@ module.exports = function BrowserWindow() {
         },
         document: {
             select: (selector) => {
-                const {computed, isTransmit, contentWindow} = getSubSelector(selector);
-
                 let result = [];
-                const semaphore = this.computedFrameList(this.frameTree);
 
-                if (!isTransmit) {
-                    const domList = document.querySelectorAll(selector.join(' '));
+                const domList = document.querySelectorAll(selector.join(' '));
 
-                    _.each(domList, (dom) => {
-                        if (_.indexOf(result, dom['_agent_dom_']) !== -1) {
-                            return false;
-                        }
+                _.each(domList, (dom) => {
+                    if (_.indexOf(result, dom['_agent_dom_']) !== -1) {
+                        return false;
+                    }
 
-                        if (dom['_agent_dom_']) {
-                            result.push(dom['_agent_dom_']);
-    
-                            return false;
-                        }
-    
-                        const symbol = generateSymbol();
-                        this.domMapping[symbol] = dom;
-    
-                        dom['_agent_dom_'] = symbol;
-    
-                        result.push(symbol);
-                    });
-
-                    return result;
-                }
-                
-                return new promise((resolve, reject) => {
-
-                    if (document.querySelectorAll(contentWindow).length === 0) {
-                        resolve([]);
+                    if (dom['_agent_dom_']) {
+                        result.push(dom['_agent_dom_']);
 
                         return false;
                     }
 
-                    _.each(document.querySelectorAll(contentWindow), (item, index) => {
+                    const symbol = generateSymbol();
+                    this.domMapping[symbol] = dom;
 
-                        post(document.querySelectorAll(contentWindow)[index].contentWindow, {
-                            namespace: 'browserWindow',
-                            type: 'select',
-                            args: {
-                                selector: computed
-                            }
-                        });
-                    });
+                    dom['_agent_dom_'] = symbol;
 
-                    addListener(top, 'message', this.createDomMapping = (event) => {
-                        const { namespace, type, args } = parseObj(event.data);
-
-                        if (namespace !== 'browserWindow' || type !== 'select') {
-                            return false;
-                        }
-
-                        const {frameId, list} = args;
-
-                        _.each(list, (item) => {
-                            this.domMapping[item] = {
-                                frameId, hash: item
-                            };
-
-                            if (_.indexOf(result, item) !== -1) {
-                                return false;
-                            }
-        
-                            result.push(item);
-                        });
-
-                        semaphore.splice(_.indexOf(semaphore, frameId), 1);
-                        
-                        if (semaphore.length === 0) {
-                            removeListener(top, 'message', this.createDomMapping);
-
-                            resolve(result);
-                        }
-                    });
+                    result.push(symbol);
                 });
             },
             element: {
                 attribute: (hash, attributeName) => {
-                    const dom = this.domMapping[hash];
+                    const {dom, message} = getDom.call(this, hash);
 
                     if (dom['_agent_dom_']) {
                         return dom.getAttribute(attributeName);
                     }
 
-                    return communicateFramework(dom, 'attribute', {
-                        frameId: dom.frameId, hash, attributeName
+                    return communicateFramework(this.isExist(dom.frameId, message), 'attribute', {
+                        hash, attributeName
                     });
                 },
                 tagName: (hash) => {
-                    const dom = this.domMapping[hash];
+                    const {dom, message} = getDom.call(this, hash);
 
                     if (dom['_agent_dom_']) {
                         return dom.tagName;
                     }
 
-                    return communicateFramework(dom, 'tagName', {
-                        frameId: dom.frameId, hash
+                    return communicateFramework(this.isExist(dom.frameId, message), 'tagName', {
+                        hash
                     });
                 },
                 text: (hash) => {
-                    const dom = this.domMapping[hash];
+                    const {dom, message} = getDom.call(this, hash);
 
                     if (dom['_agent_dom_']) {
                         return dom.innerText;
                     }
 
-                    return communicateFramework(dom, 'text', {
-                        frameId: dom.frameId, hash
+                    return communicateFramework(this.isExist(dom.frameId, message), 'text', {
+                        hash
                     });
                 },
                 property: (hash, propertyName) => {
-                    const dom = this.domMapping[hash];
+                    const {dom, message} = getDom.call(this, hash);
 
                     if (dom['_agent_dom_']) {
                         return dom.propertyName;
                     }
 
-                    return communicateFramework(dom, 'property', {
-                        frameId: dom.frameId, propertyName, hash
+                    return communicateFramework(this.isExist(dom.frameId, message), 'property', {
+                        propertyName, hash
                     });
                 },
                 css: (hash) => {
-                    const dom = this.domMapping[hash];
+                    const {dom, message} = getDom.call(this, hash);
 
                     if (dom['_agent_dom_']) {
                         return getComputedStyle(dom);
                     }
 
-                    return communicateFramework(dom, 'css', {
-                        frameId: dom.frameId, hash
+                    return communicateFramework(this.isExist(dom.frameId, message), 'css', {
+                        hash
                     });
                 },
                 rect: (hash) => {
-                    const dom = this.domMapping[hash];
+                    const {dom, message} = getDom.call(this, hash);
 
                     if (dom['_agent_dom_']) {
                         return getDomRect(dom);
                     }
 
-                    return communicateFramework(dom, 'rect', {
-                        frameId: dom.frameId, hash
+                    return communicateFramework(this.isExist(dom.frameId, message), 'rect', {
+                        hash
                     });
                 },
                 alert: () => {
@@ -382,4 +345,15 @@ module.exports = function BrowserWindow() {
             }
         }
     }
+}
+
+function getDom(hash) {
+    const dom = this.domMapping[hash];
+    const message = 'The element is not exist.';
+
+    if (!dom) {
+        throw new Error(message);
+    }
+
+    return {dom, message};
 }

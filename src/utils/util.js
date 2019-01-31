@@ -49,6 +49,24 @@ function getSubSelector(selector) {
     return {computed: selector.slice(selectObj.index + 1), isTransmit, contentWindow: selector.slice(0, selectObj.index + 1)};
 }
 
+function isExist(callArr, executeObj) {
+    let isExist = true;
+
+    _.each(callArr, function (item) {
+        if (!executeObj[item]) {
+            isExist = false;
+
+            return;
+        }
+
+        executeObj = executeObj[item];
+    });
+
+    return {
+        isExist, executeObj
+    }
+}
+
 module.exports = {
-    fillArray, generateSymbol, getDomRect, getSubSelector
+    fillArray, generateSymbol, getDomRect, getSubSelector, isExist
 }

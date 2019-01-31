@@ -1,7 +1,7 @@
 const post = require('../utils/postMessage');
 const {frameListLength} = require('../constants');
 const {updateChildren} = require('../utils/frameOperate');
-const {generateSymbol, getDomRect, getSubSelector} = require('../utils/util');
+const {generateSymbol, getDomRect, getSubSelector, isExist} = require('../utils/util');
 
 const {getComputedStyle} = require('../utils/polyfill');
 
@@ -60,22 +60,32 @@ module.exports = function FrameWindow() {
         }
     }
 
+    this.execute = ({callerArr, args}) => {
+        const result = isExist(callerArr, this);
+        
+        const arg = {
+            result: null, error: null, isError: false
+        };
+
+        if (result.isExist) {
+            arg.result = result.executeObj(args);
+        } else {
+            arg.isError = true;
+            arg.error = 'The function is not exist.';
+        }
+
+        communicateFramework('executeMethod', arg);
+    }
+
+    this.test = (args) => {
+        console.log(args, this.symbol);
+    }
+
     this.document = {
         select: ({selector}) => {
             const {computed, isTransmit, contentWindow} = getSubSelector(selector);
 
             if (isTransmit) {
-
-                _.each(document.querySelectorAll(contentWindow.join(' ')), (item, index) => {
-    
-                    post(document.querySelectorAll(contentWindow.join(' '))[index].contentWindow, {
-                        namespace: 'browserWindow',
-                        type: 'select',
-                        args: {
-                            selector: computed
-                        }
-                    });
-                });
             } else {
                 let result = [];
                 const domList = document.querySelectorAll(computed.join(' '));
@@ -111,68 +121,56 @@ module.exports = function FrameWindow() {
 
         },
         element: {
-            attribute: ({frameId, hash, attributeName}) => {
-                const isSelected = frameId === this.symbol;
+            attribute: ({hash, attributeName}) => {
+                const {dom, arg} = generateResult.call(this, hash);
 
-                const args = isSelected ? {
-                    result: this.domMapping[hash].getAttribute(attributeName)
-                } : {
-                    frameId, hash, attributeName
+                if (dom) {
+                    arg.result = dom.getAttribute(attributeName);
                 }
 
-                communicateFramework(isSelected, 'attribute', args);
+                communicateFramework('attribute', arg);
             },
-            tagName: ({frameId, hash}) => {
-                const isSelected = frameId === this.symbol;
+            tagName: ({hash}) => {
+                const {dom, arg} = generateResult.call(this, hash);
 
-                const args = isSelected ? {
-                    result: this.domMapping[hash].tagName
-                } : {
-                    frameId, hash
-                };
+                if (dom) {
+                    arg.result = dom.tagName;
+                }
 
                 communicateFramework(isSelected, 'tagName', args);
             },
             text: ({frameId, hash}) => {
-                const isSelected = frameId === this.symbol;
+                const {dom, arg} = generateResult.call(this, hash);
 
-                const args = isSelected ? {
-                    result: this.domMapping[hash].innerText
-                } : {
-                    frameId, hash
+                if (dom) {
+                    arg.result = dom.innerText;
                 }
 
                 communicateFramework(isSelected, 'text', args);
             },
-            property: ({frameId, hash, propertyName}) => {
-                const isSelected = frameId === this.symbol;
+            property: ({hash, propertyName}) => {
+                const {dom, arg} = generateResult.call(this, hash);
 
-                const args = isSelected ? {
-                    result: this.domMapping[hash][propertyName]
-                } : {
-                    frameId, hash, propertyName
+                if (dom) {
+                    arg.result = dom[propertyName];
                 }
 
                 communicateFramework(isSelected, 'property', args);
             },
-            css: ({frameId, hash}) => {
-                const isSelected = frameId === this.symbol;
+            css: ({hash}) => {
+                const {dom, arg} = generateResult.call(this, hash);
 
-                const args = isSelected ? {
-                    result: getComputedStyle(this.domMapping[hash])
-                } : {
-                    frameId, hash
+                if (dom) {
+                    arg.result = getComputedStyle(dom);
                 }
 
                 communicateFramework(isSelected, 'css', args);
             },
             rect: (hash) => {
-                const isSelected = frameId === this.symbol;
+                const {dom, arg} = generateResult.call(this, hash);
 
-                const args = isSelected ? {
-                    result: getDomRect(this.domMapping[hash])
-                } : {
-                    frameId, hash
+                if (dom) {
+                    arg.result = getDomRect(dom);
                 }
 
                 communicateFramework(isSelected, 'rect', args);
@@ -188,4 +186,18 @@ module.exports = function FrameWindow() {
             }
         }
     }
+}
+
+function generateResult(hash) {
+    const arg = {
+        result: null, error: null, isError: false
+    };
+    const dom = this.domMapping[hash];
+
+    if (!dom) {
+        arg.error = 'The element is not exist';
+        arg.isError = true;
+    }
+
+    return {dom, arg};
 }

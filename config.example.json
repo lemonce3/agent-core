@@ -1,0 +1,13 @@
+{
+	"dev": {
+		"port": 9000,
+		"host": "127.0.0.1"
+	},
+	"frameServer": {
+		"startPort": 8000,
+		"host": "127.0.0.1"
+	},
+	"observer": {
+		"url": "http://localhost:8080"
+	}
+}

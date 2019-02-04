@@ -1,0 +1,1 @@
+exports.isBrowserWindow = top === self;

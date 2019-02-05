@@ -11,16 +11,16 @@ function RequestAgent(baseURL = document.baseURI) {
 RequestAgent.prototype.request = function ({
 	method = 'get',
 	url = '',
-	data = null,
+	data,
 	async = true
-}) {
+} = {}) {
 	const request = new XMLHttpRequest();
-	const stringData = JSON.stringify(data);
+	const stringData = JSON.stringify(data || {});
 
-	request.open(method, `${this.baseURL}${url}?_time${_.now()}`, async);
+	request.open(method, `${this.baseURL}${url}?_t=${_.now()}`, async);
 	request.setRequestHeader('Content-type', 'application/json');
 
-	return async ?new Promise((resolve, reject) => {
+	return async ? new Promise((resolve, reject) => {
 		request.onreadystatechange = function () {
 			if (request.readyState !== 4) {
 				return;

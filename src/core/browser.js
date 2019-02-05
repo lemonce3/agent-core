@@ -1,10 +1,12 @@
 const EventEmitter = require('eventemitter3');
 const _ = require('underscore');
-const browserWindow = module.exports = new EventEmitter();
+
 const { addEventListener } = require('../utils/polyfill');
+const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
 
-const httpAgent = new RequestAgent('/api/agent');
+const browserWindow = module.exports = new EventEmitter();
+const KEEP_ALIVE_INTERVAL = 1000;
 
 _.extend(browserWindow, {
 	agentId: null,
@@ -13,50 +15,96 @@ _.extend(browserWindow, {
 	program: null
 });
 
-const iframeWindowList = [];
-const program = {
-	'lang.eval'() {
+// const iframeWindowList = [];
+// const program = {
+// 	'lang.eval'() {
 
-	},
-	'window.form'() {
+// 	},
+// 	'window.form'() {
 
-	}
-};
+// 	}
+// };
+
+addEventListener(window, 'beforeunload', function () {
+	browserWindow.destroy();
+});
 
 browserWindow.init = function init() {
 	if (window.top !== window.self) {
-		return this.emit('ready');
+		return browserWindow.emit('ready');
 	}
+
+	const iframe = document.createElement('iframe');
+
+	iframe.src = '/api/agent/fetch';
+	iframe.width = 0;
+	iframe.height = 0;
+
+	/**
+	 * Use to re-try for connection to observer.
+	 * Be canceled when agentId was set.
+	 */
+	const retryWatcher = setTimeout(function () {
+		cancel();
+		document.body.removeChild(iframe);
+		browserWindow.init();
+	}, 3000);
+
+	const cancel = listenMessage(window, function getAgentId(agentId) {
+		document.body.removeChild(iframe);
+		browserWindow.agentId = agentId;
+
+		const httpAgent = new RequestAgent(`/api/agent/${agentId}`);
+		
+		httpAgent.request({ method: 'post', url: '/window' }).then(data => {
+			const { id: windowId } = data;
+			const httpAgent = browserWindow.httpAgent =
+				new RequestAgent(`/api/agent/${agentId}/window/${windowId}`);
+
+			browserWindow.windowId = windowId;
+
+			(function keepAlive () {
+				httpAgent.request().then(data => {
+					// const { program } = data;
 	
-	const agent = document.createElement('iframe');
-	agent.src = '/api/agent/fetch';
-	agent.width = 0;
-	agent.height = 0;
+					// if (program) {
+					// 	changeProgram(program, this);
+					// }
+	
+					setTimeout(() => keepAlive(), KEEP_ALIVE_INTERVAL);
+				}, function () {
 
-	addEventListener(window, 'message', function (event) {
-		console.log(event)
+					/**
+					 * Retry when connection error.
+					 */
+					browserWindow.init();
+				});
+			}());
+		});
+
+		/**
+		 * Agent id set successfully then remove message listener.
+		 * Kill retry watcher.
+		 */
+		cancel();
+		clearTimeout(retryWatcher);
 	});
 
-	addEventListener(window, 'beforeunload', function () {
-		browserWindow.destroy();
-	});
-
+	/**
+	 * Get agent id by iframe post-message as soon as possible.
+	 */
 	(function tryInit() {
 		if (document.body) {
-			document.body.appendChild(agent);
+			document.body.appendChild(iframe);
 			browserWindow.emit('ready');
 		} else {
-			// console.log('Too early')
 			setTimeout(tryInit, 5);
 		}
 	}());
 };
 
 browserWindow.destroy = function destroy() {
-	httpAgent.request({
-		method: 'delete',
-		url: `/${this.agentId}/window/${this.windowId}`
-	});
+	this.httpAgent.request({ method: 'delete' });
 };
 
 browserWindow.isTesting = function () {

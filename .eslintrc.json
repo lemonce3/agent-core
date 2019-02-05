@@ -9,7 +9,8 @@
         "ecmaVersion": 2016
     },
     "globals": {
-        "config": true
+        "config": true,
+        "ActiveXObject": true
     },
     "rules": {
         "indent": [

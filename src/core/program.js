@@ -1,5 +1,9 @@
 const programRegistry = {};
 
+const state = {
+	running: null
+};
+
 exports.execute = function execute(programName, args) {
 	const program = programRegistry[programName];
 

@@ -1,6 +1,7 @@
 const EventEmitter = require('eventemitter3');
 const { Promise, addEventListener } = require('../utils/polyfill');
 const { execute } = require('./program');
+const { postMessage } = require('../utils/global');
 
 let programPromise = null;
 
@@ -17,12 +18,12 @@ function requestMessage(windowProxy, { type, args }) {
 			programPromise = null;
 		}, 10000);
 
-		windowProxy.postMessage(JSON.stringify({ request: true, type, args }), '*');
+		postMessage(windowProxy, { request: true, type, args });
 	});
-};
+}
 
 function respondMessage(windowProxy, { returnValue, error }) {
-	windowProxy.postMessage(JSON.stringify({ response: true, returnValue, error }), '*');
+	postMessage(windowProxy, { response: true, returnValue, error });
 }
 
 addEventListener(window, 'message', function (event) {

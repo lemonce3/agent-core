@@ -1,4 +1,4 @@
-exports.Promise = window.Promise || require('promise-polyfill');
+exports.Promise = window.Promise || require('promise-polyfill/lib');
 
 exports.XMLHttpRequest = window.XMLHttpRequest || function MicrosoftXMLHTTP() {
 	return new ActiveXObject('Microsoft.XMLHTTP');

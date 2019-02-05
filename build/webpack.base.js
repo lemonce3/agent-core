@@ -4,7 +4,6 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 global.config = require(path.resolve(process.cwd(), 'config.json'));
 
 module.exports = {
-	mode: 'production',
 	entry: {
 		bundle: [
 			path.resolve(__dirname, '../src/index.js'),
@@ -22,17 +21,16 @@ module.exports = {
 			use: [
 				'babel-loader'
 			],
-
 		}]
 	},
 	plugins: [
 		// new UglifyJsPlugin({
-		//     uglifyOptions: {
-		//         compress: {
-		//             warnings: false
-		//         },
-		//         ie8: true
-		//     }
+		// 	uglifyOptions: {
+		// 		compress: {
+		// 			warnings: false
+		// 		},
+		// 		ie8: true
+		// 	}
 		// })
 	],
 	node: false

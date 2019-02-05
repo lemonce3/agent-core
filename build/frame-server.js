@@ -9,6 +9,8 @@ const frameServerHost = config.frameServer.host;
 const frameHTML = fs.readFileSync(path.resolve(__dirname, 'template/frame.html'), 'utf-8');
 const topHTML = fs.readFileSync(path.resolve(__dirname, 'template/top.html'), 'utf-8');
 
+exports.rootFrameURL = `http://${frameServerHost}:${startPort}`;
+
 function createFrameServer(id, frameData, callback = () => {}) {
 	const port = startPort + id;
 	const content = template(frameData ? frameHTML : topHTML, Object.assign({

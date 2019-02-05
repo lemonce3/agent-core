@@ -8,4 +8,4 @@ exports.execute = function execute(programName, args) {
 	}
 
 	return program(...args);
-}
+};

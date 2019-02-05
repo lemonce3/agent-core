@@ -1,7 +1,5 @@
-const { isBrowserWindow } = require('./utils/global');
+const browserWindow = require('./core/browser');
 
-if (isBrowserWindow) {
-	
-}
+browserWindow.init();
 
 //TODO register FrameWindow

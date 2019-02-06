@@ -5,6 +5,7 @@
     [
       "env", {
         "modules": false,
+        "loose": true,
         "targets": {
           "browsers": ["ie 8-11"]
         }

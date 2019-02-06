@@ -1,29 +1,39 @@
-const programRegistry = {};
+const { Promise } = require('../utils/polyfill');
 
+const programRegistry = {};
 const state = {
 	running: null
 };
 
-const program = {};
+exports.execute = function commit(programOptions) {
+	const { name, args = [] } = state.running = programOptions;
+	const program = programRegistry[name];
 
-exports.commitProgram = function commit(programOptions) {
+	return new Promise((resolve, reject) => {
+		if (!program) {
+			return reject(new Error('Program is not registered.'));
+		}
 
+		setTimeout(() => reject(new Error('Program execution over time.')), 10000);
+
+		try {
+			resolve(program.apply(null, args));
+		} catch (error) {
+			reject(error);
+		}
+	}).finally(() => {
+		state.running = null;
+	});
 };
 
-exports.execute = function execute(programName, args) {
-	const program = programRegistry[programName];
-
-	if (!program) {
-		throw new Error('Program is not registered.');
-	}
-
-	return program(...args);
+exports.isBusy = function isBusy() {
+	return Boolean(state.running);
 };
 
 exports.register = function register(name, fn) {
-	if (program[name]) {
+	if (programRegistry[name]) {
 		throw new Error(`Program named ${name} has been registed.`);
 	}
 
-	program[name] = fn;
+	programRegistry[name] = fn;
 };

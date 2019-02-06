@@ -1,14 +1,21 @@
-'use strict';
-
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const webpack = require('webpack');
-const application = require('./webpack.base');
+const webpackBase = require('./webpack.base');
+const merge = require('webpack-merge');
 
-application.mode = 'none';
-
-application.plugins.push(
-	new webpack.DefinePlugin({
-		"process.env.NODE_ENV": JSON.stringify("production")
-	})
-);
-
-module.exports = application;
+module.exports = merge(webpackBase, {
+	mode: 'none',
+	plugins: [
+		new webpack.DefinePlugin({
+			'process.env.NODE_ENV': JSON.stringify('production')
+		}),
+		new UglifyJsPlugin({
+			uglifyOptions: {
+				compress: {
+					warnings: false
+				},
+				ie8: true
+			}
+		})
+	]
+});

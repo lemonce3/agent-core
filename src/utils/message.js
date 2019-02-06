@@ -86,14 +86,23 @@ addEventListener(window, 'message', function (event) {
 			responseDatagram.data = error;
 			responseDatagram.status = 128;
 		}).then(() => {
-			postMessage(source, responseDatagram);
+			/**
+			 * The source may be gone.
+			 */
+			if (source) {
+				postMessage(source, responseDatagram);
+			}
 		});
 	}
 });
 
+const DEFAULT_REQUEST_TIMEOUT = 30000;
 let requestId = 0;
 
-exports.request = function requestPMCServer(origin, channel, data) {
+exports.request = function requestPMCServer(origin, channel, data, {
+	timeout = DEFAULT_REQUEST_TIMEOUT
+} = {}) {
+	//TODO 共用一个监听器可能会更安全一些
 	const id = requestId++;
 	const datagram = {
 		channel, data, id,
@@ -107,7 +116,7 @@ exports.request = function requestPMCServer(origin, channel, data) {
 			const watcher = setTimeout(function () {
 				reject(new Error('PMC connection reset.'));
 				removeEventListener(window, 'message', listenPMCResponse);
-			}, 30000);
+			}, timeout);
 
 			addEventListener(window, 'message', listenPMCResponse);
 

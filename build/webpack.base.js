@@ -1,6 +1,5 @@
 'use strict';
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 global.config = require(path.resolve(process.cwd(), 'config.json'));
 
 module.exports = {
@@ -23,15 +22,5 @@ module.exports = {
 			],
 		}]
 	},
-	plugins: [
-		// new UglifyJsPlugin({
-		// 	uglifyOptions: {
-		// 		compress: {
-		// 			warnings: false
-		// 		},
-		// 		ie8: true
-		// 	}
-		// })
-	],
 	node: false
 };

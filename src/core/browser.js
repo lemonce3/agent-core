@@ -5,17 +5,17 @@ const message = require('../utils/message');
 const { addEventListener, Promise } = require('../utils/polyfill');
 const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
-const { commitProgram } = require('./program');
+const { commitProgram, isBusy } = require('./program');
 
-const browserWindow = module.exports = new EventEmitter();
+const browser = module.exports = new EventEmitter();
 const KEEP_ALIVE_INTERVAL = 1000;
 
-browserWindow.init = function init() {
+browser.init = function init() {
 	const frameRegistry = window.a = {
 		list: [],
 	};
 	
-	_.extend(browserWindow, {
+	_.extend(browser, {
 		agentId: null,
 		windowId: null,
 		masterId: null,
@@ -23,7 +23,7 @@ browserWindow.init = function init() {
 	});
 
 	addEventListener(window, 'beforeunload', function () {
-		browserWindow.httpAgent.request({ method: 'delete' });
+		browser.httpAgent.request({ method: 'delete' });
 	});
 	
 	const iframe = document.createElement('iframe');
@@ -39,7 +39,7 @@ browserWindow.init = function init() {
 	const retryWatcher = setTimeout(function () {
 		cancel();
 		document.body.removeChild(iframe);
-		browserWindow.init();
+		browser.init();
 	}, 3000);
 
 	const cancel = listenMessage(window, function getAgentId(agentId) {
@@ -49,23 +49,35 @@ browserWindow.init = function init() {
 		}
 
 		document.body.removeChild(iframe);
-		browserWindow.agentId = agentId;
+		browser.agentId = agentId;
 
 		const httpAgent = new RequestAgent(`/api/agent/${agentId}`);
 		
 		httpAgent.request({ method: 'post', url: '/window' }).then(data => {
 			const { id: windowId } = data;
-			const httpAgent = browserWindow.httpAgent =
+			const httpAgent = browser.httpAgent =
 				new RequestAgent(`/api/agent/${agentId}/window/${windowId}`);
 
-			browserWindow.windowId = windowId;
+			browser.windowId = windowId;
 
 			(function keepAlive () {
-				httpAgent.request().then(data => {
-					const { program } = data;
-	
-					if (program) {
-						commitProgram(program, this);
+				httpAgent.request({ method: 'put' }).then(data => {
+					const { program, masterId } = data;
+
+					/**
+					 * Update frame when master binded.
+					 */
+					if (browser.masterId !== masterId) {
+						browser.masterId = masterId;
+						updataBrowser();
+					}
+
+					if (program && !isBusy()) {
+						commitProgram(program, this).then(function (returnValue) {
+
+						}, function (error) {
+							
+						});
 					}
 	
 					setTimeout(() => keepAlive(), KEEP_ALIVE_INTERVAL);
@@ -74,11 +86,11 @@ browserWindow.init = function init() {
 					/**
 					 * Retry when connection error.
 					 */
-					browserWindow.init();
+					browser.init();
 				});
 			}());
 		}).then(() => {
-			setTimeout(() => browserWindow.emit('init', browserWindow), 10);
+			setTimeout(() => browser.emit('init', browser), 10);
 		});
 
 		/**
@@ -105,8 +117,9 @@ browserWindow.init = function init() {
 
 		return {
 			frameId: length - 1,
-			windowId: browserWindow.windowId,
-			agentId: browserWindow.agentId
+			windowId: browser.windowId,
+			agentId: browser.agentId,
+			testing: false
 		};
 	});
 
@@ -114,26 +127,23 @@ browserWindow.init = function init() {
 		frameRegistry.list[id] = null;
 	});
 
-	browserWindow.on('init', function () {
+	browser.on('init', updataBrowser);
+
+	function updataBrowser() {
 		/**
 		 * IE8's events are triggered synchronously, which may lead to to unexpected results.
 		 */
 		let asyncTask = Promise.resolve();
-
+	
 		_.each(frameRegistry.list, (source, id) => {
 			asyncTask = asyncTask.then(() => {
-				message.request(source, 'agent.update', {
+				message.request(source, 'browser.update', {
 					frameId: id,
-					windowId: browserWindow.windowId,
-					agentId: browserWindow.agentId
+					windowId: browser.windowId,
+					agentId: browser.agentId,
+					testing: Boolean(browser.masterId)
 				});
 			});
 		});
-
-		browserWindow.emit('ready', browserWindow);
-	});
-};
-
-browserWindow.isTesting = function () {
-	return Boolean(browserWindow.masterId);
+	}
 };

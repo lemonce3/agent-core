@@ -6,5 +6,3 @@ if (window.top === window.self) {
 }
 
 frameWindow.init();
-
-//TODO register FrameWindow

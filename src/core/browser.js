@@ -2,7 +2,7 @@ const EventEmitter = require('eventemitter3');
 const _ = require('underscore');
 const message = require('../utils/message');
 
-const { addEventListener } = require('../utils/polyfill');
+const { addEventListener, Promise } = require('../utils/polyfill');
 const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
 const { commitProgram } = require('./program');
@@ -10,24 +10,17 @@ const { commitProgram } = require('./program');
 const browserWindow = module.exports = new EventEmitter();
 const KEEP_ALIVE_INTERVAL = 1000;
 
-const frameRegistry = {
-	list: [],
-	counter: 0
-};
-
-_.extend(browserWindow, {
-	agentId: null,
-	windowId: null,
-	masterId: null,
-	program: null
-});
-
 browserWindow.init = function init() {
-	if (window.top !== window.self) {
-		return setTimeout(function () {
-			browserWindow.emit('init', browserWindow);
-		}, 0);
-	}
+	const frameRegistry = window.a = {
+		list: [],
+	};
+	
+	_.extend(browserWindow, {
+		agentId: null,
+		windowId: null,
+		masterId: null,
+		program: null
+	});
 
 	addEventListener(window, 'beforeunload', function () {
 		browserWindow.httpAgent.request({ method: 'delete' });
@@ -84,8 +77,8 @@ browserWindow.init = function init() {
 					browserWindow.init();
 				});
 			}());
-
-			browserWindow.emit('init', browserWindow);
+		}).then(() => {
+			setTimeout(() => browserWindow.emit('init', browserWindow), 10);
 		});
 
 		/**
@@ -106,28 +99,40 @@ browserWindow.init = function init() {
 			setTimeout(tryInit, 0);
 		}
 	}());
-};
 
-message.on('frame.register', function (data, source) {
-	const length = frameRegistry.list.push(source);
+	message.on('frame.register', function (data, source) {
+		const length = frameRegistry.list.push(source);
 
-	return {
-		frameId: length - 1,
-		windowId: browserWindow.windowId,
-		agentId: browserWindow.agentId
-	};
-});
-
-browserWindow.on('init', function () {
-	_.each(frameRegistry.list, source => {
-		message.request(source, 'agent.update', {
+		return {
+			frameId: length - 1,
 			windowId: browserWindow.windowId,
 			agentId: browserWindow.agentId
-		});
+		};
 	});
 
-	browserWindow.emit('ready', browserWindow);
-});
+	message.on('frame.destroy', function (id) {
+		frameRegistry.list[id] = null;
+	});
+
+	browserWindow.on('init', function () {
+		/**
+		 * IE8's events are triggered synchronously, which may lead to to unexpected results.
+		 */
+		let asyncTask = Promise.resolve();
+
+		_.each(frameRegistry.list, (source, id) => {
+			asyncTask = asyncTask.then(() => {
+				message.request(source, 'agent.update', {
+					frameId: id,
+					windowId: browserWindow.windowId,
+					agentId: browserWindow.agentId
+				});
+			});
+		});
+
+		browserWindow.emit('ready', browserWindow);
+	});
+};
 
 browserWindow.isTesting = function () {
 	return Boolean(browserWindow.masterId);

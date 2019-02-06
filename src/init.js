@@ -1,9 +1,10 @@
 const browserWindow = require('./core/browser');
 const frameWindow = require('./core/frame');
 
-browserWindow.init();
-browserWindow.on('ready', function () {
-	frameWindow.init();
-});
+if (window.top === window.self) {
+	browserWindow.init();
+}
+
+frameWindow.init();
 
 //TODO register FrameWindow

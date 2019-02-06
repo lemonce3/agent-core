@@ -1,89 +1,26 @@
 const EventEmitter = require('eventemitter3');
-const { Promise, addEventListener } = require('../utils/polyfill');
 const { execute } = require('./program');
-const { postMessage } = require('../utils/global');
+const message = require('../utils/message');
 
-let programPromise = null;
+const frame = {
+	id: 0,
+	windowId: -1,
+	agentId: -1,
+	elementCounter: 0,
+	testing: false
+};
 
-function requestMessage(windowProxy, { type, args }) {
-	if (programPromise) {
-		throw new Error('Frame window is busy in program.');
-	}
-
-	return new Promise((resolve, reject) => {
-		programPromise = { resolve, reject };
-
-		setTimeout(() => {
-			reject(new Error('Request message timeout.'));
-			programPromise = null;
-		}, 10000);
-
-		postMessage(windowProxy, { request: true, type, args });
-	});
-}
-
-function respondMessage(windowProxy, { returnValue, error }) {
-	postMessage(windowProxy, { response: true, returnValue, error });
-}
-
-addEventListener(window, 'message', function (event) {
-	if (!event.data.request) {
-		return;
-	}
-
-	const { type, args } = JSON.parse(event.data);
-
-	Promise.resolve(execute(type, args)).then(returnValue => {
-		respondMessage(event.source, { returnValue });
-	}, error => {
-		respondMessage(event.source, { error });
-	});
+message.on('agent.update', function (data) {
+	frame.windowId = data.windowId;
+	frame.agentId = data.agentId;
 });
 
-addEventListener(window, 'message', function (event) {
-	if (!event.data.response) {
-		return;
-	}
-
-	if (!programPromise) {
-		return;
-	}
-
-	const { returnValue, error } = JSON.parse(event.data);
-	
-	if (error) {
-		programPromise.reject(error);
-	} else {
-		programPromise.resolve(returnValue);
-	}
-	
-	programPromise = null;
-});
-
-exports.FrameWindow = class FrameWindow extends EventEmitter {
-	constructor({ agentId, windowId, frameId }) {
-		super();
-
-		this.agentId = null;
-		this.windowId = null;
-		this.frameId = null;
-
-		this.elements = {};
-		this.programRegistry = {};
-		this.testing = false;
-	}
-
-	isTesting() {
-		return new Promise
-	}
-
-	init() {
-
-	}
-
-	execute(windowProxy, type, args = []) {
-		return requestMessage(windowProxy, { type, args });
-	}
+exports.init = function initFrameWindow() {
+	message.request(top, 'frame.register').then(({ data }) => {
+		frame.id = data.frameId;
+		frame.windowId = data.windowId;
+		frame.agentId = data.agentId;
+	});
 };
 
 function overrideWindowDialog() {

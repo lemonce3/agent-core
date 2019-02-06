@@ -4,7 +4,18 @@ exports.isTop = window.top === window.self;
 
 exports.listenMessage = function (window, listener) {
 	function listenerWrap (event) {
-		listener(JSON.parse(event.data), event);
+		if (typeof event.data !== 'string') {
+			return;
+		}
+
+		try {
+			const data = JSON.parse(event.data);
+
+			listener(data, event);
+		} catch (error) {
+			console.log(error)
+			return;
+		}
 	}
 
 	addEventListener(window, 'message', listenerWrap);

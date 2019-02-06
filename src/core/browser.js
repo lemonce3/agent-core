@@ -1,12 +1,19 @@
 const EventEmitter = require('eventemitter3');
 const _ = require('underscore');
+const message = require('../utils/message');
 
 const { addEventListener } = require('../utils/polyfill');
 const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
+const { commitProgram } = require('./program');
 
 const browserWindow = module.exports = new EventEmitter();
 const KEEP_ALIVE_INTERVAL = 1000;
+
+const frameRegistry = {
+	list: [],
+	counter: 0
+};
 
 _.extend(browserWindow, {
 	agentId: null,
@@ -15,25 +22,17 @@ _.extend(browserWindow, {
 	program: null
 });
 
-// const iframeWindowList = [];
-// const program = {
-// 	'lang.eval'() {
-
-// 	},
-// 	'window.form'() {
-
-// 	}
-// };
-
-addEventListener(window, 'beforeunload', function () {
-	browserWindow.destroy();
-});
-
 browserWindow.init = function init() {
 	if (window.top !== window.self) {
-		return browserWindow.emit('ready');
+		return setTimeout(function () {
+			browserWindow.emit('init', browserWindow);
+		}, 0);
 	}
 
+	addEventListener(window, 'beforeunload', function () {
+		browserWindow.httpAgent.request({ method: 'delete' });
+	});
+	
 	const iframe = document.createElement('iframe');
 
 	iframe.src = '/api/agent/fetch';
@@ -51,6 +50,11 @@ browserWindow.init = function init() {
 	}, 3000);
 
 	const cancel = listenMessage(window, function getAgentId(agentId) {
+		//TODO 最好能和message服务方法互斥。
+		if (typeof agentId !== 'string') {
+			return;
+		}
+
 		document.body.removeChild(iframe);
 		browserWindow.agentId = agentId;
 
@@ -65,11 +69,11 @@ browserWindow.init = function init() {
 
 			(function keepAlive () {
 				httpAgent.request().then(data => {
-					// const { program } = data;
+					const { program } = data;
 	
-					// if (program) {
-					// 	changeProgram(program, this);
-					// }
+					if (program) {
+						commitProgram(program, this);
+					}
 	
 					setTimeout(() => keepAlive(), KEEP_ALIVE_INTERVAL);
 				}, function () {
@@ -80,6 +84,8 @@ browserWindow.init = function init() {
 					browserWindow.init();
 				});
 			}());
+
+			browserWindow.emit('init', browserWindow);
 		});
 
 		/**
@@ -96,25 +102,33 @@ browserWindow.init = function init() {
 	(function tryInit() {
 		if (document.body) {
 			document.body.appendChild(iframe);
-			browserWindow.emit('ready');
 		} else {
-			setTimeout(tryInit, 5);
+			setTimeout(tryInit, 0);
 		}
 	}());
 };
 
-browserWindow.destroy = function destroy() {
-	this.httpAgent.request({ method: 'delete' });
-};
+message.on('frame.register', function (data, source) {
+	const length = frameRegistry.list.push(source);
+
+	return {
+		frameId: length - 1,
+		windowId: browserWindow.windowId,
+		agentId: browserWindow.agentId
+	};
+});
+
+browserWindow.on('init', function () {
+	_.each(frameRegistry.list, source => {
+		message.request(source, 'agent.update', {
+			windowId: browserWindow.windowId,
+			agentId: browserWindow.agentId
+		});
+	});
+
+	browserWindow.emit('ready', browserWindow);
+});
 
 browserWindow.isTesting = function () {
-	return Boolean(this.masterId);
-};
-
-browserWindow.registerProgram = function registerProgram(name, fn) {
-	if (program[name]) {
-		throw new Error(`Program named ${name} has been registed.`);
-	}
-
-	program[name] = fn;
+	return Boolean(browserWindow.masterId);
 };

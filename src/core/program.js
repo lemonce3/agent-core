@@ -5,7 +5,7 @@ const state = {
 	running: null
 };
 
-exports.execute = function commit(programOptions) {
+exports.execute = window.exec = function execute(programOptions) {
 	const { name, args = [] } = state.running = programOptions;
 	const program = programRegistry[name];
 
@@ -24,10 +24,6 @@ exports.execute = function commit(programOptions) {
 	}).finally(() => {
 		state.running = null;
 	});
-};
-
-exports.isBusy = function isBusy() {
-	return Boolean(state.running);
 };
 
 exports.register = function register(name, fn) {

@@ -1,7 +1,7 @@
 const EventEmitter = require('eventemitter3');
-const { execute } = require('./program');
 const message = require('../utils/message');
-const { addEventListener, XMLHttpRequest } = require('../utils/polyfill');
+const { addEventListener } = require('../utils/polyfill');
+const { RequestAgent } = require('../utils/request');
 const _ = require('underscore');
 
 const frame = module.exports = new EventEmitter();

@@ -5,7 +5,7 @@ const message = require('../utils/message');
 const { addEventListener, Promise } = require('../utils/polyfill');
 const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
-const { commitProgram, isBusy } = require('./program');
+const { execute } = require('./program');
 
 const browser = module.exports = new EventEmitter();
 const KEEP_ALIVE_INTERVAL = 1000;
@@ -60,6 +60,8 @@ browser.init = function init() {
 
 			browser.windowId = windowId;
 
+			let isBusy = false;
+
 			(function keepAlive () {
 				httpAgent.request({ method: 'put' }).then(data => {
 					const { program, masterId } = data;
@@ -72,12 +74,23 @@ browser.init = function init() {
 						updataBrowser();
 					}
 
-					if (program && !isBusy()) {
-						commitProgram(program, this).then(function (returnValue) {
+					if (program && !isBusy) {
+						isBusy = true;
 
-						}, function (error) {
-							
-						});
+						const exitData = {
+							returnValue: undefined,
+							error: null
+						};
+
+						execute(program).then(returnValue => {
+							exitData.returnValue = returnValue;
+						}, error => {
+							exitData.error = { message: error.message };
+						}).finally(() => httpAgent.request({
+							method: 'post',
+							url: `/program/${program.id}/exit`,
+							data: exitData
+						})).then(() => isBusy = false);
 					}
 	
 					setTimeout(() => keepAlive(), KEEP_ALIVE_INTERVAL);
@@ -90,7 +103,7 @@ browser.init = function init() {
 				});
 			}());
 		}).then(() => {
-			setTimeout(() => browser.emit('init', browser), 10);
+			setTimeout(updataBrowser, 10);
 		});
 
 		/**
@@ -126,8 +139,6 @@ browser.init = function init() {
 	message.on('frame.destroy', function (id) {
 		frameRegistry.list[id] = null;
 	});
-
-	browser.on('init', updataBrowser);
 
 	function updataBrowser() {
 		/**

@@ -1,6 +1,16 @@
+const {
+	getAttributesMap,
+	getRectOfElement,
+	getComputedStyle
+} = require('./utils/element');
 
 module.exports = function install({
-	extend, underscore: _, message, Promise, frame
+	extend,
+	underscore: _,
+	message,
+	Promise,
+	frame,
+	browser
 }) {
 	extend('lang.eval', function executeScript(scriptString) {
 		window.eval(scriptString);
@@ -39,9 +49,13 @@ module.exports = function install({
 
 	});
 
-	let elementCounter = 0;
+	let elementWatchingList = [];
+	//DEBUG: exec({ name:'document.select', args: [['p']] })
 
-	message.on('document.select', function ({ selector, textFilter }) {
+	message.on('document.select', function ({
+		selector,
+		textFilter
+	}) {
 		const localSelector = selector.shift();
 
 		if (selector.length !== 0) {
@@ -54,21 +68,23 @@ module.exports = function install({
 			_.each(childFrameList, frame => {
 				promise = promise.then(function () {
 					return message.request(frame.contentWindow, 'document.select', {
-						selector, textFilter
+						selector,
+						textFilter
 					});
 				});
 			});
-			
-			message.request(window.top, 'document.select.append', childFrameList.length -1);
+
+			message.request(window.top, 'document.select.append', childFrameList.length - 1);
 		} else {
 			const list = [];
 			const elementList = document.querySelectorAll(localSelector);
 
 			_.each(elementList, function (element) {
-				let id = element.__agentId__;
+				let id = element.__AGENT_ID__;
 
 				if (id === undefined) {
-					id = element.__agentId__ = elementCounter++;
+					id = element.__AGENT_ID__ = elementWatchingList.length;
+					elementWatchingList.push(element);
 				}
 
 				if (textFilter && !_.find(element.childNodes, node => {
@@ -77,14 +93,18 @@ module.exports = function install({
 					return;
 				}
 
-				list.push({ f: frame.id, e: id });
+				list.push({
+					f: frame.id,
+					e: id,
+					n: element.tagName,
+					a: getAttributesMap(element),
+					v: element.value
+				});
 			});
 
 			message.request(window.top, 'document.select.return', list);
 		}
 	});
-
-	//exec({ name:'document.select', args: [['p']] })
 
 	extend('document.select', function querySeletorAllExtended(selector, textFilter = '') {
 		let counter = 1;
@@ -114,15 +134,80 @@ module.exports = function install({
 		 * So message.on first then request
 		 */
 		message.request(window, 'document.select', {
-			selector, textFilter
+			selector,
+			textFilter
 		}, 1000);
 
 		return promise;
 	});
 
-	extend('document.element');
-	extend('document.element.property');
-	extend('document.element.css');
+	message.on('element.css', function ({ id, nameList}) {
+		return _.pick(getComputedStyle(elementWatchingList[id]), nameList);
+	});
+
+	extend('document.element.css', function (elementProxy, cssStyleNameList = []) {
+		const {
+			f: frameId,
+			e: id
+		} = elementProxy;
+		const frameWindow = browser.getFrameWindow(frameId);
+
+		return message.request(frameWindow, 'element.css', {
+			id,
+			nameList: cssStyleNameList
+		}).then(({
+			data
+		}) => data);
+	});
+
+	message.on('element.rect', function (elementId) {
+		return getRectOfElement(elementWatchingList[elementId]);
+	});
+
+	extend('document.element.rect', function (elementProxy) {
+		//TODO 需要传递到top
+		const {
+			f: frameId,
+			e: id
+		} = elementProxy;
+		const frameWindow = browser.getFrameWindow(frameId);
+
+		return message.request(frameWindow, 'element.rect', id).then(({
+			data
+		}) => data);
+	});
+
+	message.on('element.attributes', function (elementId) {
+		return getAttributesMap(elementWatchingList[elementId]);
+	});
+
+	extend('document.element.attributes', function (elementProxy) {
+		const {
+			f: frameId,
+			e: id
+		} = elementProxy;
+		const frameWindow = browser.getFrameWindow(frameId);
+
+		return message.request(frameWindow, 'element.attributes', id).then(({
+			data
+		}) => data);
+	});
+
+	message.on('element.text', function (elementId) {
+		return elementWatchingList[elementId].innerText;
+	});
+
+	extend('document.element.text', function (elementProxy) {
+		const {
+			f: frameId,
+			e: id
+		} = elementProxy;
+		const frameWindow = browser.getFrameWindow(frameId);
+
+		return message.request(frameWindow, 'element.text', id).then(({
+			data
+		}) => data);
+	});
 
 	extend('navigation.title', function getTitle() {
 		return window.document.title;
@@ -135,7 +220,7 @@ module.exports = function install({
 	extend('navigation.to', function loadURL(href) {
 		return window.location.href = href;
 	});
-	
+
 	extend('navigation.back', function loadURL() {
 		return history.back();
 	});

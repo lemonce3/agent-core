@@ -10,10 +10,15 @@ const { execute } = require('./program');
 const browser = module.exports = new EventEmitter();
 const KEEP_ALIVE_INTERVAL = 1000;
 
+const frameRegistry = {
+	list: [],
+};
+
+browser.getFrameWindow = function getFrameWindow(index) {
+	return frameRegistry.list[index];
+};
+
 browser.init = function init() {
-	const frameRegistry = window.a = {
-		list: [],
-	};
 	
 	_.extend(browser, {
 		agentId: null,

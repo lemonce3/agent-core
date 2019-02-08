@@ -65,15 +65,44 @@ function overrideWindowDialog() {
 }
 
 function overrideWindowDialogInTesting() {
-	window.alert = function alertProxy() {
+	const requestAgent = new RequestAgent(
+		`/api/agent/${frame.agentId}/window/${frame.windowId}/dialog`
+	);
 
+	window.alert = function alertProxy(message) {
+		requestAgent.request({
+			method: 'post',
+			data: {
+				type: 'alert',
+				message,
+			},
+			async: false
+		});
 	};
 
-	window.confirm = function confirmProxy() {
+	window.confirm = function confirmProxy(message) {
+		const { value } = requestAgent.request({
+			method: 'post',
+			data: {
+				type: 'confirm',
+				message,
+			},
+			async: false
+		});
 
+		return value;
 	};
 
-	window.prompt = function promptProxy() {
+	window.prompt = function promptProxy(message) {
+		const { value } = requestAgent.request({
+			method: 'post',
+			data: {
+				type: 'prompt',
+				message,
+			},
+			async: false
+		});
 
+		return value;
 	};
 }

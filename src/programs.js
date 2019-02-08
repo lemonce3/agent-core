@@ -43,21 +43,23 @@ module.exports = function install({
 
 	message.on('document.select', function ({ selector, textFilter }) {
 		const localSelector = selector.shift();
-		
+
 		if (selector.length !== 0) {
 			const childFrameList = _.filter(document.querySelectorAll(localSelector), function (element) {
 				return element.tagName === 'IFRAME' || element.tagName === 'FRAME';
 			});
 
-			message.request(window.top, 'document.select.append', childFrameList.length);
+			let promise = Promise.resolve();
 
 			_.each(childFrameList, frame => {
-				message.request(frame.contentWindow, 'document.select', {
-					selector, textFilter
+				promise = promise.then(function () {
+					return message.request(frame.contentWindow, 'document.select', {
+						selector, textFilter
+					});
 				});
 			});
 			
-			message.request(window.top, 'document.select.append', -1);
+			message.request(window.top, 'document.select.append', childFrameList.length -1);
 		} else {
 			const list = [];
 			const elementList = document.querySelectorAll(localSelector);
@@ -67,6 +69,12 @@ module.exports = function install({
 
 				if (id === undefined) {
 					id = element.__agentId__ = elementCounter++;
+				}
+
+				if (textFilter && !_.find(element.childNodes, node => {
+					return node.nodeValue && node.nodeValue.indexOf(textFilter) !== -1;
+				})) {
+					return;
 				}
 
 				list.push({ f: frame.id, e: id });
@@ -82,12 +90,8 @@ module.exports = function install({
 		let counter = 1;
 		let list = [];
 
-		message.request(window, 'document.select', {
-			selector, textFilter
-		}, 1000);
-
-		return new Promise((resolve, reject) => {
-			setTimeout(() => reject(new Error('Non end when document.select().')), 200);
+		const promise = new Promise((resolve, reject) => {
+			setTimeout(() => reject(new Error('Non end when document.select().')), 1000);
 
 			message.on('document.select.return', function (elementList) {
 				list = list.concat(elementList);
@@ -104,6 +108,16 @@ module.exports = function install({
 				counter += length;
 			});
 		});
+
+		/**
+		 * IE8's events are triggered synchronously, which may lead to to unexpected results.
+		 * So message.on first then request
+		 */
+		message.request(window, 'document.select', {
+			selector, textFilter
+		}, 1000);
+
+		return promise;
 	});
 
 	extend('document.element');

@@ -149,16 +149,12 @@ browser.init = function init() {
 		/**
 		 * IE8's events are triggered synchronously, which may lead to to unexpected results.
 		 */
-		let asyncTask = Promise.resolve();
-	
 		_.each(frameRegistry.list, (source, id) => {
-			asyncTask = asyncTask.then(() => {
-				message.request(source, 'browser.update', {
-					frameId: id,
-					windowId: browser.windowId,
-					agentId: browser.agentId,
-					testing: Boolean(browser.masterId)
-				});
+			message.request(source, 'browser.update', {
+				frameId: id,
+				windowId: browser.windowId,
+				agentId: browser.agentId,
+				testing: Boolean(browser.masterId)
 			});
 		});
 	}

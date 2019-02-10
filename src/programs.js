@@ -63,14 +63,10 @@ module.exports = function install({
 				return element.tagName === 'IFRAME' || element.tagName === 'FRAME';
 			});
 
-			let promise = Promise.resolve();
-
 			_.each(childFrameList, frame => {
-				promise = promise.then(function () {
-					return message.request(frame.contentWindow, 'document.select', {
-						selector,
-						textFilter
-					});
+				message.request(frame.contentWindow, 'document.select', {
+					selector,
+					textFilter
 				});
 			});
 

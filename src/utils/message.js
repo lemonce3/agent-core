@@ -19,7 +19,10 @@ exports.off = function removeChannel(name) {
 // 监听器注册流程/模式改动（编程负担太重）
 
 function postMessage(window, datagram) {
-	window.postMessage(JSON.stringify(datagram), '*');
+	const watcherId = setTimeout(function () {
+		window.postMessage(JSON.stringify(datagram), '*');
+		clearTimeout(watcherId);
+	}, 0);
 }
 
 function PMCFilter(event) {
@@ -118,7 +121,7 @@ exports.request = function requestPMCServer(origin, channel, data, {
 
 	try {
 		postMessage(origin, datagram);
-		
+
 		return new Promise((resolve, reject) => {
 			const watcher = setTimeout(function () {
 				reject(new Error('PMC connection reset.'));

@@ -28,11 +28,6 @@ function updateFrame(data) {
 	frame.id = data.frameId;
 	frame.windowId = data.windowId;
 	frame.agentId = data.agentId;
-
-	if (frame.testing !== data.testing) {
-		data.testing ? overrideWindowDialogInTesting() : overrideWindowDialog();
-	}
-
 	frame.testing = data.testing;
 }
 
@@ -40,69 +35,74 @@ const _alert = window.alert;
 const _confirm = window.confirm;
 const _prompt = window.prompt;
 
-function overrideWindowDialog() {
+(function overrideWindowDialog() {
 	window.alert = function alertProxy(message) {
-		_alert(message);
 
-		frame.emit('alert', message);
-	};
+		if (frame.testing) {
+			const requestAgent = new RequestAgent(
+				`/api/agent/${frame.agentId}/window/${frame.windowId}/dialog`);
 
-	window.confirm = function confirmProxy() {
-		const result = _confirm(message);
-
-		frame.emit('confirm', message, result);
-
-		return result;
-	};
-
-	window.prompt = function promptProxy(message, defaultValue) {
-		const input = defaultValue ? _prompt(message, defaultValue) : _prompt(message);
-
-		frame.emit('prompt', message, input);
-
-		return input;
-	};
-}
-
-function overrideWindowDialogInTesting() {
-	const requestAgent = new RequestAgent(
-		`/api/agent/${frame.agentId}/window/${frame.windowId}/dialog`
-	);
-
-	window.alert = function alertProxy(message) {
-		requestAgent.request({
-			method: 'post',
-			data: {
-				type: 'alert',
-				message,
-			},
-			async: false
-		});
+			requestAgent.request({
+				method: 'post',
+				data: {
+					type: 'alert',
+					message,
+				},
+				async: false
+			});
+		} else {
+			_alert(message);
+	
+			frame.emit('alert', message);
+		}
 	};
 
 	window.confirm = function confirmProxy(message) {
-		const { value } = requestAgent.request({
-			method: 'post',
-			data: {
-				type: 'confirm',
-				message,
-			},
-			async: false
-		});
+		if (frame.testing) {
+			const requestAgent = new RequestAgent(
+				`/api/agent/${frame.agentId}/window/${frame.windowId}/dialog`);
 
-		return value;
+			const { value } = requestAgent.request({
+				method: 'post',
+				data: {
+					type: 'confirm',
+					message,
+				},
+				async: false
+			});
+	
+			return value;
+		} else {
+			const result = _confirm(message);
+	
+			frame.emit('confirm', message, result);
+	
+			return result;
+		}
 	};
 
-	window.prompt = function promptProxy(message) {
-		const { value } = requestAgent.request({
-			method: 'post',
-			data: {
-				type: 'prompt',
-				message,
-			},
-			async: false
-		});
+	window.prompt = function promptProxy(message, defaultValue) {
+		if (frame.testing) {
+			const requestAgent = new RequestAgent(
+				`/api/agent/${frame.agentId}/window/${frame.windowId}/dialog`);
 
-		return value;
+			const { value } = requestAgent.request({
+				method: 'post',
+				data: {
+					type: 'prompt',
+					message,
+				},
+				async: false
+			});
+	
+			return value;
+
+		} else {
+			const input = defaultValue ? _prompt(message, defaultValue) : _prompt(message);
+	
+			frame.emit('prompt', message, input);
+	
+			return input;
+		}
 	};
-}
+}());

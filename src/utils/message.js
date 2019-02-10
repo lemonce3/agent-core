@@ -3,7 +3,7 @@
  */
 
 const EventEmitter = require('eventemitter3');
-const { addEventListener, removeEventListener, Promise } = require('./polyfill');
+const { addEventListener, Promise } = require('./polyfill');
 const server = new EventEmitter();
 
 server.channel = {};
@@ -15,6 +15,8 @@ exports.on = function addChannel(name, handler) {
 exports.off = function removeChannel(name) {
 	delete server.channel[name];
 };
+
+// 监听器注册流程/模式改动（编程负担太重）
 
 function postMessage(window, datagram) {
 	window.postMessage(JSON.stringify(datagram), '*');
@@ -63,6 +65,7 @@ addEventListener(window, 'message', function (event) {
 	 * It is not a request
 	 */
 	if (!channel) {
+		server.channel[`PMCResponse.listen${id}`](event);
 		return;
 	}
 
@@ -72,6 +75,8 @@ addEventListener(window, 'message', function (event) {
 
 	if (!handler) {
 		responseDatagram.status = 1;
+		responseDatagram.data = 'Unregistered handler';
+
 		postMessage(source, responseDatagram);
 	} else {
 		new Promise((resolve, reject) => {
@@ -83,7 +88,7 @@ addEventListener(window, 'message', function (event) {
 		}).then(function (data) {
 			responseDatagram.data = data;
 		}, function (error) {
-			responseDatagram.data = error;
+			responseDatagram.data = error.message;
 			responseDatagram.status = 128;
 		}).then(() => {
 			/**
@@ -95,6 +100,8 @@ addEventListener(window, 'message', function (event) {
 		});
 	}
 });
+
+// request方法异步化
 
 const DEFAULT_REQUEST_TIMEOUT = 30000;
 let requestId = 0;
@@ -111,29 +118,27 @@ exports.request = function requestPMCServer(origin, channel, data, {
 
 	try {
 		postMessage(origin, datagram);
-
+		
 		return new Promise((resolve, reject) => {
 			const watcher = setTimeout(function () {
 				reject(new Error('PMC connection reset.'));
-				removeEventListener(window, 'message', listenPMCResponse);
 			}, timeout);
 
-			addEventListener(window, 'message', listenPMCResponse);
+			server.channel[`PMCResponse.listen${id}`] = listenPMCResponse;
 
 			function listenPMCResponse(event) {
 				const datagram = PMCFilter(event);
-			
+				
 				if (!datagram || datagram.status === undefined || datagram.id !== id) {
 					return;
 				}
-
+				
 				if (datagram.status !== 0) {
-					return reject(new Error('Internal PMC error.'));
+					return reject(new Error(datagram.data));
 				}
-
+				
 				resolve(datagram);
 				clearTimeout(watcher);
-				removeEventListener(window, 'message', listenPMCResponse);
 			}
 		});
 	} catch (error) {

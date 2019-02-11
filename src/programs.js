@@ -107,21 +107,26 @@ module.exports = function install({
 		let list = [];
 
 		const promise = new Promise((resolve, reject) => {
-			setTimeout(() => reject(new Error('Non end when document.select().')), 1000);
+			const timer = setTimeout(() => reject(new Error('Non end when document.select().')), 5000);
 
-			message.on('document.select.return', function (elementList) {
-				list = list.concat(elementList);
-				counter--;
-
+			function returnValue() {
 				if (counter === 0) {
 					message.off('document.select.return');
 					message.off('document.select.append');
 					resolve(list);
+					clearTimeout(timer);
 				}
+			}
+
+			message.on('document.select.return', function (elementList) {
+				list = list.concat(elementList);
+				counter--;
+				returnValue();
 			});
 
 			message.on('document.select.append', function (length) {
 				counter += length;
+				returnValue();
 			});
 		});
 
@@ -201,6 +206,42 @@ module.exports = function install({
 		const frameWindow = browser.getFrameWindow(frameId);
 
 		return message.request(frameWindow, 'element.text', id).then(({
+			data
+		}) => data);
+	});
+
+	message.on('element.action', function ({ elementId, action }) {
+		return elementWatchingList[elementId][action]();
+	});
+
+	extend('document.element.action', function (elementProxy, action) {
+		const {
+			f: frameId,
+			e: elementId
+		} = elementProxy;
+		const frameWindow = browser.getFrameWindow(frameId);
+
+		return message.request(frameWindow, 'element.action', {
+			elementId, action
+		}).then(({
+			data
+		}) => data);
+	});
+
+	message.on('element.value', function ({ elementId, value }) {
+		return elementWatchingList[elementId].value = value;
+	});
+
+	extend('document.element.value', function (elementProxy, value) {
+		const {
+			f: frameId,
+			e: elementId
+		} = elementProxy;
+		const frameWindow = browser.getFrameWindow(frameId);
+
+		return message.request(frameWindow, 'element.value', {
+			elementId, value
+		}).then(({
 			data
 		}) => data);
 	});

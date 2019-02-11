@@ -2,7 +2,7 @@ const EventEmitter = require('eventemitter3');
 const _ = require('underscore');
 const message = require('../utils/message');
 
-const { addEventListener, Promise } = require('../utils/polyfill');
+const { addEventListener } = require('../utils/polyfill');
 const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
 const { execute } = require('./program');
@@ -27,8 +27,11 @@ browser.init = function init() {
 		program: null
 	});
 
+	let aliveWatcher = null;
+
 	addEventListener(window, 'beforeunload', function () {
-		browser.httpAgent.request({ method: 'delete' });
+		clearTimeout(aliveWatcher);
+		browser.httpAgent.request({ method: 'delete', async: false });
 	});
 	
 	const iframe = document.createElement('iframe');
@@ -98,7 +101,7 @@ browser.init = function init() {
 						})).then(() => isBusy = false);
 					}
 	
-					setTimeout(() => keepAlive(), KEEP_ALIVE_INTERVAL);
+					aliveWatcher = setTimeout(() => keepAlive(), KEEP_ALIVE_INTERVAL);
 				}, function () {
 
 					/**

@@ -27,14 +27,26 @@ RequestAgent.prototype.request = function ({
 			}
 
 			if (request.status === 200) {
-				resolve(JSON.parse(request.responseText));
+				try {
+					resolve(JSON.parse(request.responseText));
+				} catch (error) {
+					resolve(request.responseText);
+				}
 			} else {
 				reject(request.status);
 			}
 		};
 
 		request.send(stringData);
-	}): JSON.parse(request.send(stringData));
+	}) : (function () {
+		const response = request.send(stringData);
+
+		try {
+			return JSON.parse(response);
+		} catch (error) {
+			return response;
+		}
+	}());
 };
 
 exports.RequestAgent = RequestAgent;

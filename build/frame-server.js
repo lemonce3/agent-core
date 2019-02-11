@@ -8,17 +8,21 @@ const frameServerHost = config.frameServer.host;
 
 const frameHTML = fs.readFileSync(path.resolve(__dirname, 'template/frame.html'), 'utf-8');
 const topHTML = fs.readFileSync(path.resolve(__dirname, 'template/top.html'), 'utf-8');
+const framesetHTML = fs.readFileSync(path.resolve(__dirname, 'template/frameset.html'), 'utf-8');
 
 exports.rootFrameURL = `http://${frameServerHost}:${startPort}`;
 
-function createFrameServer(id, frameData, callback = () => {}) {
+function createFrameServer(id, frameData, callback = () => {}, frameset = false) {
 	const port = startPort + id;
-	const content = template(frameData ? frameHTML : topHTML, Object.assign({
-		bundleURL, port
-	}, frameData ? {
-		urlA: `http://${frameServerHost}:${startPort + frameData[0]}`,
-		urlB: `http://${frameServerHost}:${startPort + frameData[1]}`,
-	} : {}));
+	const content = template(
+		frameData ? (frameset ? framesetHTML : frameHTML) : topHTML,
+		Object.assign({
+			bundleURL, port
+		}, frameData ? {
+			urlA: `http://${frameServerHost}:${startPort + frameData[0]}`,
+			urlB: `http://${frameServerHost}:${startPort + frameData[1]}`,
+		} : {})
+	);
 
 	http.createServer((req, res) => {
 		res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -34,7 +38,7 @@ createFrameServer(0, [1, 2], () => {
 		createFrameServer(4, [7, 8], () => {
 			createFrameServer(7);
 			createFrameServer(8);
-		});
+		}, true);
 	});
 
 	createFrameServer(2, [5, 6], () => {

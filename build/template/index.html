@@ -13,9 +13,9 @@
 	<iframe src="<%=frameURL%>" width="800" height="600"></iframe>
 	<script>
 	function openWindow() {
-		const win = window.win = window.open('/', '', 'dialog');
+		var win = window.win = window.open('/', '', 'dialog');
 		console.log(1111)
-		setTimeout(() => win.close(), 5000);
+		// setTimeout(() => win.close(), 5000);
 	}
 	
 	document.querySelector('input').onfocus = function () {

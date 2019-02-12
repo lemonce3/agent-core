@@ -104,8 +104,6 @@ addEventListener(window, 'message', function (event) {
 	}
 });
 
-// request方法异步化
-
 const DEFAULT_REQUEST_TIMEOUT = 30000;
 let requestId = 0;
 

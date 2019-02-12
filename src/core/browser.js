@@ -2,7 +2,7 @@ const EventEmitter = require('eventemitter3');
 const _ = require('underscore');
 const message = require('../utils/message');
 
-const { addEventListener } = require('../utils/polyfill');
+const { addEventListener, removeEventListener } = require('../utils/polyfill');
 const { listenMessage } = require('../utils/global');
 const { RequestAgent } = require('../utils/request');
 const { execute } = require('./program');
@@ -18,6 +18,13 @@ browser.getFrameWindow = function getFrameWindow(index) {
 	return frameRegistry.list[index];
 };
 
+let aliveWatcher = null;
+
+function destroyWindow() {
+	clearTimeout(aliveWatcher);
+	browser.httpAgent.request({ method: 'delete', async: false });
+}
+
 browser.init = function init() {
 	
 	_.extend(browser, {
@@ -27,12 +34,7 @@ browser.init = function init() {
 		program: null
 	});
 
-	let aliveWatcher = null;
-
-	addEventListener(window, 'beforeunload', function () {
-		clearTimeout(aliveWatcher);
-		browser.httpAgent.request({ method: 'delete', async: false });
-	});
+	addEventListener(window, 'beforeunload', destroyWindow);
 	
 	const iframe = document.createElement('iframe');
 
@@ -107,6 +109,7 @@ browser.init = function init() {
 					/**
 					 * Retry when connection error.
 					 */
+					removeEventListener(window, 'beforeunload', destroyWindow);
 					browser.init();
 				});
 			}());

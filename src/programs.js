@@ -161,21 +161,58 @@ module.exports = function install({
 		}) => data);
 	});
 
-	message.on('element.rect', function (elementId) {
-		return getRectOfElement(elementWatchingList[elementId]);
+	let rectQueryCounter = 0;
+	const queryRegistry = {};
+
+	message.on('element.rect.return', function ({ rect, queryId }, source) {
+		const frameElement = _.find(document.querySelectorAll('iframe,frame'), element => {
+			return element.contentWindow === source;
+		});
+
+		const frameRect = getRectOfElement(frameElement);
+
+		rect.top += frameRect.top + frameElement.clientTop;
+		rect.left += frameRect.left + frameElement.clientLeft;
+		rect.right += frameRect.right;
+		rect.bottom += frameRect.bottom;
+
+		if (window.self !== window.top) {
+			message.request(window.parent, 'element.rect.return', { rect, queryId});
+		} else {
+			queryRegistry[queryId](rect);
+		}
+	});
+
+	message.on('element.rect', function ({ elementId, queryId }) {
+		const rect = getRectOfElement(elementWatchingList[elementId]);
+
+		message.request(window.parent, 'element.rect.return', {
+			rect, queryId
+		});
 	});
 
 	extend('document.element.rect', function (elementProxy) {
-		//TODO 需要传递到top
 		const {
 			f: frameId,
-			e: id
+			e: elementId
 		} = elementProxy;
 		const frameWindow = browser.getFrameWindow(frameId);
 
-		return message.request(frameWindow, 'element.rect', id).then(({
-			data
-		}) => data);
+		return new Promise((resolve, reject) => {
+			const queryId = rectQueryCounter++;
+
+			const timer = setTimeout(() => {
+				delete queryRegistry[queryId];
+				reject(new Error('Rect query timeout'));
+			}, 5000);
+			
+			queryRegistry[queryId] = function resolveWrap(value) {
+				resolve(value);
+				clearTimeout(timer);
+			};
+
+			message.request(frameWindow, 'element.rect', { elementId, queryId });
+		});
 	});
 
 	message.on('element.attributes', function (elementId) {

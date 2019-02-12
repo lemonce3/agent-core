@@ -16,7 +16,7 @@ exports.removeEventListener = function (element, eventType, listener) {
 	if (element.removeEventListener) {
 		element.removeEventListener(eventType, listener, false);
 	} else {
-		element.detachEvent(`on${eventType}`, listener, false);
+		element.detachEvent(`on${eventType}`, listener);
 	}
 };
 

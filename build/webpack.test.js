@@ -1,7 +1,7 @@
-'use strict';
+const path = require('path');
 const webpackBase = require('./webpack.base');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const merge = require('webpack-merge');
-require('./frame-server');
 
 module.exports = merge(webpackBase, {
 	mode: 'development',
@@ -10,8 +10,21 @@ module.exports = merge(webpackBase, {
 		port: config.dev.port,
 		host: '0.0.0.0',
 		hot: false,
-		proxy: {
-			'/api': config.observer.url
-		}
-	}
+		inline: false,
+	},
+	entry: {
+		bundle: [
+			path.resolve('test/index.js'),
+		]
+	},
+	plugins: [
+		new HtmlWebpackPlugin({
+			filename: 'index.html',
+			template: path.resolve(__dirname, './template/index.html'),
+			templateParameters: {
+				frameURL: require('./frame-server').rootFrameURL
+			},
+			inject: 'head'
+		}),
+	]
 });

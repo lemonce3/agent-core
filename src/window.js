@@ -6,7 +6,7 @@ const KEEP_ALIVE_INTERVAL = 2000;
 const RETRY_INTERVAL = 3000;
 const IS_TOP = top === self;
 
-const frameList = [];
+const frameList = exports.frameList = [];
 const programRegistry = window.__p = exports.programRegistry = {};
 let windowModel = {}, nextTickList = [];
 
@@ -36,15 +36,23 @@ function getAgentId() {
 	utils.addEventListener(window, 'message', agentIdListener);
 	document.body.appendChild(iframe);
 
+	function destroy() {
+		utils.removeEventListener(window, 'message', agentIdListener);
+		document.body.removeChild(iframe);
+	}
+
 	return new utils.Promise(function (resolve, reject) {
 		$resolve = resolve;
 
 		setTimeout(function () {
 			reject(new Error('Getting agentId timeout.'));
 		}, 3000);
-	}).finally(function () {
-		utils.removeEventListener(window, 'message', agentIdListener);
-		document.body.removeChild(iframe);
+	}).then(function (data) {
+		destroy();
+		return data;
+	}, function (error) {
+		destroy();
+		throw error;
 	});
 }
 
@@ -111,10 +119,6 @@ function init() {
 if (IS_TOP) {
 	init();
 }
-
-exports.getFrameWindow = function getFrameWindow(index) {
-	return frameList[index];
-};
 
 exports.nextTick = function (fn) {
 	nextTickList.push(fn);

@@ -36,3 +36,33 @@ _.each(['alert', 'confirm', 'prompt'], function (type) {
 		}
 	};
 });
+
+if (utils.isIE8) {
+	document.attachEvent('onclick', function (event) {
+		const { srcElement: anchor } = event;
+
+		if (anchor.tagName === 'A' && anchor.target === '_blank') {
+			event.returnValue = false;
+
+			return window.open(anchor.href, '_blank', 'dialog=yes');
+		}
+
+		if (anchor.href === 'about:blank') {
+			return event.returnValue = false;
+		}
+	});
+} else {
+	document.addEventListener('click', function (event) {
+		const { target: anchor } = event;
+
+		if (anchor.tagName === 'A' && anchor.target === '_blank') {
+			event.preventDefault();
+
+			return window.open(anchor.href, '_blank', 'dialog=yes');
+		}
+
+		if (anchor.href === 'about:blank') {
+			return event.preventDefault();
+		}
+	}, true);
+}

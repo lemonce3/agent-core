@@ -1,6 +1,8 @@
 const agentWindow = require('../window');
 const pmc = require('@lemonce3/pmc/src');
 const _ = require('underscore');
+const utils =require('../utils');
+const { elementWatchingList } = require('./document.select');
 
 pmc.on('element.css', function ({ id, nameList}) {
 	return _.pick(getComputedStyle(elementWatchingList[id]), nameList);
@@ -11,14 +13,12 @@ agentWindow.program('document.element.css', function (elementProxy, cssStyleName
 		f: frameId,
 		e: id
 	} = elementProxy;
-	const frameWindow = browser.getFrameWindow(frameId);
+	const frameWindow = agentWindow.frameList[frameId];
 
 	return pmc.request(frameWindow, 'element.css', {
 		id,
 		nameList: cssStyleNameList
-	}).then(({
-		data
-	}) => data);
+	});
 });
 
 let rectQueryCounter = 0;
@@ -29,7 +29,7 @@ pmc.on('element.rect.return', function ({ rect, queryId }, source) {
 		return element.contentWindow === source;
 	});
 
-	const frameRect = getRectOfElement(frameElement);
+	const frameRect = utils.getRectOfElement(frameElement);
 
 	rect.top += frameRect.top + frameElement.clientTop;
 	rect.left += frameRect.left + frameElement.clientLeft;
@@ -44,7 +44,7 @@ pmc.on('element.rect.return', function ({ rect, queryId }, source) {
 });
 
 pmc.on('element.rect', function ({ elementId, queryId }) {
-	const rect = getRectOfElement(elementWatchingList[elementId]);
+	const rect = utils.getRectOfElement(elementWatchingList[elementId]);
 
 	pmc.request(window.parent, 'element.rect.return', {
 		rect, queryId
@@ -56,7 +56,7 @@ agentWindow.program('document.element.rect', function (elementProxy) {
 		f: frameId,
 		e: elementId
 	} = elementProxy;
-	const frameWindow = browser.getFrameWindow(frameId);
+	const frameWindow = agentWindow.frameList[frameId];
 
 	return new Promise((resolve, reject) => {
 		const queryId = rectQueryCounter++;
@@ -76,7 +76,7 @@ agentWindow.program('document.element.rect', function (elementProxy) {
 });
 
 pmc.on('element.attributes', function (elementId) {
-	return getAttributesMap(elementWatchingList[elementId]);
+	return utils.getAttributesMap(elementWatchingList[elementId]);
 });
 
 agentWindow.program('document.element.attributes', function (elementProxy) {
@@ -84,11 +84,9 @@ agentWindow.program('document.element.attributes', function (elementProxy) {
 		f: frameId,
 		e: id
 	} = elementProxy;
-	const frameWindow = browser.getFrameWindow(frameId);
+	const frameWindow = agentWindow.frameList[frameId];
 
-	return pmc.request(frameWindow, 'element.attributes', id).then(({
-		data
-	}) => data);
+	return pmc.request(frameWindow, 'element.attributes', id);
 });
 
 pmc.on('element.text', function (elementId) {
@@ -100,15 +98,13 @@ agentWindow.program('document.element.text', function (elementProxy) {
 		f: frameId,
 		e: id
 	} = elementProxy;
-	const frameWindow = browser.getFrameWindow(frameId);
+	const frameWindow = agentWindow.frameList[frameId];
 
-	return pmc.request(frameWindow, 'element.text', id).then(({
-		data
-	}) => data);
+	return pmc.request(frameWindow, 'element.text', id);
 });
 
 pmc.on('element.action', function ({ elementId, action }) {
-	return elementWatchingList[elementId][action]();
+	return setTimeout(() => elementWatchingList[elementId][action](), 50);
 });
 
 agentWindow.program('document.element.action', function (elementProxy, action) {
@@ -116,13 +112,9 @@ agentWindow.program('document.element.action', function (elementProxy, action) {
 		f: frameId,
 		e: elementId
 	} = elementProxy;
-	const frameWindow = browser.getFrameWindow(frameId);
+	const frameWindow = agentWindow.frameList[frameId];
 
-	return pmc.request(frameWindow, 'element.action', {
-		elementId, action
-	}).then(({
-		data
-	}) => data);
+	return pmc.request(frameWindow, 'element.action', { elementId, action });
 });
 
 pmc.on('element.value', function ({ elementId, value }) {
@@ -134,11 +126,7 @@ agentWindow.program('document.element.value', function (elementProxy, value) {
 		f: frameId,
 		e: elementId
 	} = elementProxy;
-	const frameWindow = browser.getFrameWindow(frameId);
+	const frameWindow = agentWindow.frameList[frameId];
 
-	return pmc.request(frameWindow, 'element.value', {
-		elementId, value
-	}).then(({
-		data
-	}) => data);
+	return pmc.request(frameWindow, 'element.value', { elementId, value });
 });

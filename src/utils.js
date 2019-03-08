@@ -107,5 +107,6 @@ module.exports = {
 	isWindowClosed,
 	getAttributesMap,
 	getRectOfElement,
-	getComputedStyle
+	getComputedStyle,
+	isIE8: !document.createEvent
 };

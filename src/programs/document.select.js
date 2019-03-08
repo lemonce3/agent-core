@@ -5,7 +5,7 @@ const utils = require('../utils');
 const _ = require('underscore');
 const parentWindow = window.parent;
 
-let elementWatchingList = [];
+const elementWatchingList = exports.elementWatchingList = [];
 // __p["document.select"](['#abc', 'iframe']).then(console.log)
 
 pmc.on('frame.document.select', function ({ selector, textFilter }) {
@@ -51,15 +51,15 @@ pmc.on('frame.document.select', function ({ selector, textFilter }) {
 });
 
 pmc.on('frame.document.selected', function (selector, source) {
+	if (selector.length === 0) {
+		return true;
+	}
+
 	const elementList = _.filter(document.querySelectorAll(selector.pop()), function (element) {
 		return element.tagName === 'IFRAME' || element.tagName === 'FRAME';
 	});
 
 	if (_.find(elementList, frameElement => frameElement.contentWindow === source)) {
-		if (selector.length === 0) {
-			return true;
-		}
-
 		return pmc.request(parentWindow, 'frame.document.selected', selector);
 	}
 

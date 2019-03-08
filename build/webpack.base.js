@@ -14,13 +14,18 @@ module.exports = {
 	},
 	target: 'web',
 	module: {
-		rules: [{
-			test: /\.js$/,
-			exclude: /node_modules/,
-			use: [
-				'babel-loader'
-			],
-		}]
+		rules: [
+			{
+				test: /\.js$/,
+				exclude: /node_modules/,
+				use: ['babel-loader'],
+			},
+			{
+				test: /\.js$/,
+				include: /@lemonce/,
+				use: ['babel-loader'],
+			}
+		]
 	},
 	node: false
 };

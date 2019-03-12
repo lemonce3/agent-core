@@ -1,12 +1,7 @@
-const agent = module.exports = {
-	underscore: require('underscore'),
+module.exports = {
 	utils: require('./utils'),
-	window: top === self ? require('./window') : null,
-	frame: require('./frame'),
-	pmc: require('@lemonce3/pmc/src'),
-	use(install) {
-		install(agent);
-	}
+	window: require('./window'),
+	frame: require('./frame')
 };
 
 require('./watcher');

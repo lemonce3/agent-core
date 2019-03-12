@@ -1,7 +1,6 @@
 const agentWindow = require('../window');
 const pmc = require('@lemonce3/pmc/src');
 const frame = require('../frame');
-const utils = require('../utils');
 const _ = require('underscore');
 const parentWindow = window.parent;
 
@@ -37,13 +36,7 @@ pmc.on('frame.document.select', function ({ selector, textFilter }) {
 				return;
 			}
 	
-			list.push({
-				f: frame.id,
-				e: id,
-				n: element.tagName,
-				a: utils.getAttributesMap(element),
-				v: element.value
-			});
+			list.push({ f: frame.id, e: id, n: element.tagName });
 		});
 		
 		return list;

@@ -1,6 +1,6 @@
 {
   "name": "@lemonce3/agent-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -32,7 +32,6 @@
     "mocha": "^5.2.0",
     "promise-polyfill": "^8.1.0",
     "uglifyjs-webpack-plugin": "^1.1.1",
-    "underscore": "1.7.0",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.2.3",
     "webpack-dev-server": "^3.2.1",
@@ -43,6 +42,7 @@
   },
   "homepage": "https://github.com/lemonce3/agent#readme",
   "dependencies": {
-    "@lemonce3/pmc": "^0.2.0"
+    "@lemonce3/pmc": "^0.2.0",
+    "underscore": "1.7.0"
   }
 }

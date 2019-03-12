@@ -130,3 +130,16 @@ agentWindow.program('document.element.value', function (elementProxy, value) {
 
 	return pmc.request(frameWindow, 'element.value', { elementId, value });
 });
+
+pmc.on('element.scroll', function ({ elementId }) {
+	const element = elementWatchingList[elementId];
+	
+	return element && element.scrollIntoView();
+});
+
+agentWindow.program('document.element.scroll', function (elementProxy, value) {
+	const { f: frameId, e: elementId } = elementProxy;
+	const frameWindow = agentWindow.frameList[frameId];
+
+	return pmc.request(frameWindow, 'element.scroll', { elementId, value });
+});

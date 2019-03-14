@@ -3,41 +3,40 @@ const { Promise } = require('./utils');
 
 function watchProgram() {
 	agentWindow.nextTick(function (windowData) {
-		const { isExited, name, args } = windowData.program;
-
-		if (!isExited) {
-			const program = agentWindow.programRegistry[name];
-
-			return new Promise((resolve, reject) => {
-				if (!program) {
-					return reject(new Error('Program is not registered.'));
-				}
-
-				setTimeout(() => reject(new Error('Program execution over time.')), 10000);
-		
-				try {
-					resolve(program.apply(null, args));
-				} catch (error) {
-					reject(error);
-				}
-			}).then(returnValue => {
-				return { error: null, returnValue };
-			}, error => {
-				return { error };
-			}).then(({ error, returnValue }) => {
-				agentWindow.nextTick(windowData => {
-					const { program } = windowData;
-
-					program.error = error;
-					program.returnValue = returnValue;
-					program.isExited = true;
-
-					watchProgram();
-				});
-			});
+		if (!windowData.program) {
+			return watchProgram();
 		}
 
-		watchProgram();
+		const { name, args } = windowData.program;
+		const program = agentWindow.programRegistry[name];
+
+		return new Promise((resolve, reject) => {
+			if (!program) {
+				return reject(new Error('Program is not registered.'));
+			}
+
+			setTimeout(() => reject(new Error('Program execution over time.')), 10000);
+	
+			try {
+				resolve(program.apply(null, args));
+			} catch (error) {
+				reject(error);
+			}
+		}).then(returnValue => {
+			return { error: null, returnValue };
+		}, error => {
+			return { error };
+		}).then(({ error, returnValue }) => {
+			agentWindow.nextTick(windowData => {
+				const { program } = windowData;
+
+				program.error = error;
+				program.returnValue = returnValue;
+				program.isExited = true;
+
+				watchProgram();
+			});
+		});
 	});
 }
 

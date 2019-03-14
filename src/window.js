@@ -2,7 +2,7 @@ const _ = require('underscore');
 const pmc = require('@lemonce3/pmc/src');
 const utils = require('./utils');
 
-const KEEP_ALIVE_INTERVAL = 2000;
+const KEEP_ALIVE_INTERVAL = 33;
 const RETRY_INTERVAL = 3000;
 const IS_TOP = top === self;
 
@@ -11,7 +11,7 @@ const programRegistry = window.__p = exports.programRegistry = {};
 let windowModel = {}, nextTickList = [];
 
 function destroyWindow() {
-	utils.http('delete', `/api/window/${windowModel.id}`, { async: false });
+	utils.http('DELETE', `/api/window/${windowModel.id}`);
 }
 
 function getAgentId() {
@@ -85,7 +85,7 @@ pmc.on('frame.register', function (data, source) {
 });
 
 function init() {
-	utils.removeEventListener(window, 'beforeunload', destroyWindow);
+	// utils.removeEventListener(window, 'unload', destroyWindow);
 	
 	if (!document.body) {
 		return setTimeout(init, 0);
@@ -94,7 +94,8 @@ function init() {
 	getAgentId().then(function success(agentId) {
 		return utils.http('post', '/api/window', { data: { agentId } }).then(data => {
 			windowModel = data;
-			utils.addEventListener(window, 'beforeunload', destroyWindow);
+			// utils.addEventListener(window, 'unload', destroyWindow);
+			destroyWindow();
 	
 			(function keepAlive () {
 				utils.http('put', `/api/window/${windowModel.id}`, {

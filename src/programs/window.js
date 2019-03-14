@@ -26,10 +26,6 @@ agentWindow.program('window.form', function submitForm(action, method, inputs) {
 	formElement.submit();
 });
 
-agentWindow.program('window.ua', function getUserAgent() {
-	return window.navigator.userAgent;
-});
-
 agentWindow.program('window.cookie', function getCookie() {
 	return window.document.cookie;
 });

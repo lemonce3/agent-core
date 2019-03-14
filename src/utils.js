@@ -21,7 +21,7 @@ function removeEventListener(dom, eventType, listener) {
 	}
 }
 
-function http(method = 'get', url = '/', {	data, async = true } = {}) {
+function http(method = 'get', url = '/', { data = null, async = true } = {}) {
 	const request = new XMLHttpRequest();
 	const stringData = JSON.stringify(data);
 

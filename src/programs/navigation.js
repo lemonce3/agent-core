@@ -1,25 +1,31 @@
 const agentWindow = require('../window');
 
-agentWindow.program('navigation.title', function getTitle() {
-	return window.document.title;
-});
+function timeoutWrap(callback) {
+	return function () {
+		const args = arguments;
 
-agentWindow.program('navigation.href', function getURL() {
-	return window.document.URL;
-});
+		agentWindow.nextTick(function () {
+			setTimeout(function () {
+				callback.apply(null, args);
+			}, 1000);
+		});
+	
+		return true;
+	};
+}
 
-agentWindow.program('navigation.to', function loadURL(href) {
-	return window.location.href = href;
-});
+agentWindow.program('navigation.to', timeoutWrap(function (href) {
+	window.location.href = href;
+}));
 
-agentWindow.program('navigation.back', function loadURL() {
-	return history.back();
-});
+agentWindow.program('navigation.back', timeoutWrap(function () {
+	history.back();
+}));
 
-agentWindow.program('navigation.forward', function loadURL() {
-	return history.forward();
-});
+agentWindow.program('navigation.forward', timeoutWrap(function () {
+	history.forward();
+}));
 
-agentWindow.program('navigation.refresh', function loadURL() {
-	return window.location.reload();
-});
+agentWindow.program('navigation.refresh', timeoutWrap(function () {
+	window.location.reload();
+}));

@@ -7,6 +7,8 @@ function watchProgram() {
 			return watchProgram();
 		}
 
+		console.log(windowData.program);
+
 		const { name, args } = windowData.program;
 		const program = agentWindow.programRegistry[name];
 

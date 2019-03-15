@@ -30,7 +30,7 @@ _.each(['alert', 'confirm', 'prompt'], function (type) {
 		} else {
 			const value = native.apply(window, arguments);
 
-			pmc.request(top, `dialog.open.${type}`, { message, value });
+			// pmc.request(top, `dialog.open.${type}`, { message, value });
 
 			return value;
 		}

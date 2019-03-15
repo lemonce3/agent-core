@@ -28,7 +28,7 @@ function http(method = 'get', url = '/', { data = null, async = true } = {}) {
 	request.open(method, `${url}?_t=${_.now()}`, async);
 	request.setRequestHeader('Content-Type', 'application/json');
 	request.setRequestHeader('X-Observer-Forward', 'yes');
-
+	
 	return async ? new Promise((resolve, reject) => {
 		request.onreadystatechange = function () {
 			if (request.readyState !== 4) {
@@ -46,6 +46,10 @@ function http(method = 'get', url = '/', { data = null, async = true } = {}) {
 			}
 		};
 
+		request.onerror = function (error) {
+			reject(error);
+		};
+
 		request.send(data && stringData);
 	}) : (function () {
 		const response = request.send(data && stringData);
@@ -61,6 +65,10 @@ function http(method = 'get', url = '/', { data = null, async = true } = {}) {
 const isIE = !!window.ActiveXObject || 'ActiveXObject' in window;
 
 function isWindowClosed(win) {
+	if (win.self === top) {
+		return false;
+	}
+	
 	return isIE ? win.parent === win : win.closed;
 }
 
@@ -108,5 +116,5 @@ module.exports = {
 	getAttributesMap,
 	getRectOfElement,
 	getComputedStyle,
-	isIE8: !document.createEvent
+	isIE8: !document.createEvent,
 };

@@ -2,7 +2,7 @@ const agentWindow = require('../window');
 const _ = require('underscore');
 
 agentWindow.program('lang.eval', function executeScript(scriptString) {
-	window.eval(scriptString);
+	return window.eval(scriptString);
 });
 
 agentWindow.program('window.form', function submitForm(action, method, inputs) {
@@ -23,7 +23,9 @@ agentWindow.program('window.form', function submitForm(action, method, inputs) {
 	formElement.method = method;
 	formElement.action = action;
 
-	formElement.submit();
+	setTimeout(() => formElement.submit(), 500);
+
+	return true;
 });
 
 agentWindow.program('window.cookie', function getCookie() {

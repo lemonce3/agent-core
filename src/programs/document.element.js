@@ -104,7 +104,7 @@ agentWindow.program('document.element.text', function (elementProxy) {
 });
 
 pmc.on('element.action', function ({ elementId, action }) {
-	return setTimeout(() => elementWatchingList[elementId][action](), 50);
+	return setTimeout(() => elementWatchingList[elementId][action](), 500);
 });
 
 agentWindow.program('document.element.action', function (elementProxy, action) {

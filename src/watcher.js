@@ -7,8 +7,6 @@ function watchProgram() {
 			return watchProgram();
 		}
 
-		console.log(windowData.program);
-
 		const { name, args } = windowData.program;
 		const program = agentWindow.programRegistry[name];
 
@@ -62,7 +60,7 @@ function updateRect() {
 			height: document.documentElement.clientHeight,
 			top: 0,
 			left: 0
-		}
+		};
 
 		updateRect();
 	});

@@ -28,11 +28,7 @@ _.each(['alert', 'confirm', 'prompt'], function (type) {
 				async: false
 			});
 		} else {
-			const value = native.apply(window, arguments);
-
-			// pmc.request(top, `dialog.open.${type}`, { message, value });
-
-			return value;
+			return native.apply(window, arguments);
 		}
 	};
 });

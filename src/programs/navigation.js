@@ -5,9 +5,9 @@ function timeoutWrap(callback) {
 		const args = arguments;
 
 		agentWindow.nextTick(function () {
-			setTimeout(function () {
+			agentWindow.nextTick(function () {
 				callback.apply(null, args);
-			}, 1000);
+			});
 		});
 	
 		return true;

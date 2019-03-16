@@ -8,7 +8,23 @@ const IS_TOP = top === self;
 
 const frameList= window.__f = exports.frameList = [];
 const programRegistry = window.__p = exports.programRegistry = {};
-let windowModel = {}, nextTickList = [];
+
+let windowModel = {
+	meta: {
+		title: document.title,
+		URL: window.location.href,
+		referrer: document.referrer,
+		domain: document.domain
+	},
+	rect: {
+		width: document.documentElement.clientWidth,
+		height: document.documentElement.clientHeight,
+		top: 0,
+		left: 0
+	}
+};
+
+let nextTickList = [];
 
 function destroyWindow() {
 	utils.http('DELETE', `/api/window/${windowModel.id}`).catch(function () {});
@@ -71,7 +87,7 @@ function updataWindow() {
 		pmc.request(source, 'window.update', {
 			frameId: id,
 			windowId: windowModel.id,
-			testing: windowModel.agent.masterId !== null
+			testing: windowModel.agent.masterId
 		});
 	});
 }
@@ -90,7 +106,13 @@ function init() {
 	}
 
 	getAgentId().then(function success(agentId) {
-		return utils.http('post', '/api/window', { data: { agentId } }).then(data => {
+		return utils.http('post', '/api/window', {
+			data: {
+				agentId,
+				meta: windowModel.meta,
+				rect: windowModel.rect
+			}
+		}).then(data => {
 			windowModel = data;
 			destroyWindow();
 	

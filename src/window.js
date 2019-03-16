@@ -26,10 +26,6 @@ let windowModel = {
 
 let nextTickList = [];
 
-function destroyWindow() {
-	utils.http('DELETE', `/api/window/${windowModel.id}`).catch(function () {});
-}
-
 function getAgentId() {
 	const iframe = document.createElement('iframe');
 	
@@ -109,12 +105,13 @@ function init() {
 		return utils.http('post', '/api/window', {
 			data: {
 				agentId,
+				doc: windowModel.doc,
 				meta: windowModel.meta,
 				rect: windowModel.rect
 			}
 		}).then(data => {
 			windowModel = data;
-			destroyWindow();
+			utils.http('DELETE', `/api/window/${windowModel.id}`).catch(function () {});
 	
 			(function keepAlive () {
 				utils.http('put', `/api/window/${windowModel.id}`, {

@@ -10,6 +10,9 @@
 	<input type="text">
 	<button onclick="openWindow()">open</button>
 	<button onclick="confirm('hello')" id="confirm">confirm</button>
+	<form>
+		<input type="file" name="" id="upload">
+	</form>
 	<p>Debugging ROOT</p>
 	<iframe src="<%=frameURL%>" width="800" height="600"></iframe>
 	<script>
@@ -22,6 +25,21 @@
 	document.querySelector('input').onfocus = function () {
 		console.log(111111);
 	};
+
+	var upload = document.querySelector('#upload');
+	upload.addEventListener('change', function () {
+		var file = upload.files.item(0);
+		var reader = new FileReader();
+		reader.readAsDataURL(file);
+
+		reader.onload = function () {
+			var img = document.createElement('img');
+
+			img.src = this.result;
+
+			document.body.appendChild(img);
+		}
+	});
 	</script>
 </body>
 </html>

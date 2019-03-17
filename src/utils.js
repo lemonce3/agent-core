@@ -21,13 +21,17 @@ function removeEventListener(dom, eventType, listener) {
 	}
 }
 
-function http(method = 'get', url = '/', { data = null, async = true } = {}) {
+function http(method = 'get', url = '/', { data = null, async = true, type } = {}) {
 	const request = new XMLHttpRequest();
 	const stringData = JSON.stringify(data);
 
 	request.open(method, `${url}?_t=${_.now()}`, async);
 	request.setRequestHeader('Content-Type', 'application/json');
 	request.setRequestHeader('X-Observer-Forward', 'yes');
+
+	if (type) {
+		request.responseType = type;
+	}
 	
 	return async ? new Promise((resolve, reject) => {
 		request.onreadystatechange = function () {
@@ -37,6 +41,10 @@ function http(method = 'get', url = '/', { data = null, async = true } = {}) {
 
 			if (request.status === 200) {
 				try {
+					if (type === 'blob') {
+						return resolve(request.response);
+					}
+
 					resolve(JSON.parse(request.responseText));
 				} catch (error) {
 					resolve(request.responseText);
@@ -118,3 +126,5 @@ module.exports = {
 	getComputedStyle,
 	isIE8: !document.createEvent,
 };
+
+window.__http = http;

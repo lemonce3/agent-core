@@ -36,7 +36,13 @@ pmc.on('frame.document.select', function ({ selector, textFilter }) {
 				return;
 			}
 	
-			list.push({ f: frame.id, e: id, n: element.tagName });
+			list.push({
+				f: frame.id,
+				e: id,
+				n: element.tagName,
+				t: element.type,
+				v: element.value
+			});
 		});
 		
 		return list;

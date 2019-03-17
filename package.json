@@ -42,6 +42,7 @@
   },
   "homepage": "https://github.com/lemonce3/agent#readme",
   "dependencies": {
+    "@lemonce3/event-constructor": "^1.0.0",
     "@lemonce3/pmc": "^0.2.0",
     "underscore": "1.7.0"
   }

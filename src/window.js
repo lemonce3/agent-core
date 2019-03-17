@@ -2,7 +2,7 @@ const _ = require('underscore');
 const pmc = require('@lemonce3/pmc/src');
 const utils = require('./utils');
 
-const KEEP_ALIVE_INTERVAL = 20;
+const KEEP_ALIVE_INTERVAL = 40;
 const RETRY_INTERVAL = 3000;
 const IS_TOP = top === self;
 

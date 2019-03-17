@@ -10,8 +10,8 @@
 	<input type="text">
 	<button onclick="openWindow()">open</button>
 	<button onclick="confirm('hello')" id="confirm">confirm</button>
-	<form>
-		<input type="file" name="" id="upload">
+	<form method="post" action="/abc" enctype="multipart/form-data">
+		<input type="file" name="abc" id="upload">
 	</form>
 	<p>Debugging ROOT</p>
 	<iframe src="<%=frameURL%>" width="800" height="600"></iframe>

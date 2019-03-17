@@ -98,7 +98,7 @@ if (top === self) {
 	pmc.on('upload.state.update', function (pending, source) {
 		return new utils.Promise(function (resolve) {
 			agentWindow.nextTick(function (windowData) {
-				windowData.upload = pending;
+				windowData.upload.pending = pending;
 		
 				if (!pending) {
 					uploadSource = null;
@@ -113,8 +113,8 @@ if (top === self) {
 }
 
 pmc.on('upload.file.onload', function (fileOptionList) {
-	const uploadElement = uploadElement.element;
-
+	const uploadElement = uploading.element;
+	
 	if (uploadElement === null) {
 		throw new Error('No upload task pending.');
 	}
@@ -122,9 +122,9 @@ pmc.on('upload.file.onload', function (fileOptionList) {
 	const fileNameList = _.map(fileOptionList, function (options) {
 		return options.name;
 	});
-
+	
 	if (uploading.form !== null) {
-		uploading.form.appendChild(createHiddenInput(fileNameList));
+		uploading.form.appendChild(createHiddenInput(uploadElement, fileNameList));
 	}
 
 	if (isHTML5) {

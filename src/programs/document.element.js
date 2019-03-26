@@ -143,3 +143,25 @@ agentWindow.program('document.element.scroll', exports.scroll = function (elemen
 
 	return pmc.request(frameWindow, 'element.scroll', { elementId, value });
 });
+
+pmc.on('element.property.set', function ({ elementId, key, value }) {
+	return elementWatchingList[elementId][key] = value;
+});
+
+pmc.on('element.property.get', function ({ elementId, key }) {
+	return elementWatchingList[elementId][key];
+});
+
+agentWindow.program('document.element.property.set', function (elementProxy, key, value) {
+	const { f: frameId, e: elementId } = elementProxy;
+	const frameWindow = agentWindow.frameList[frameId];
+
+	return pmc.request(frameWindow, 'element.property.set', { elementId, key, value });
+});
+
+agentWindow.program('document.element.property.get', function (elementProxy, key) {
+	const { f: frameId, e: elementId } = elementProxy;
+	const frameWindow = agentWindow.frameList[frameId];
+
+	return pmc.request(frameWindow, 'element.property.get', { elementId, key });
+});

@@ -6,7 +6,8 @@ const { elementWatchingList } = require('./document.select');
 agentWindow.program('driver.mouse', function (elementProxy, actionName, eventInits) {
 	const frame = agentWindow.frameList[elementProxy.f];
 
-	return pmc.request(frame, `driver.action.mouse.${actionName}`, {
+	return pmc.request(frame, 'driver.action.mouse', {
+		action: actionName,
 		elementId: elementProxy.e,
 		eventInits
 	});
@@ -16,7 +17,7 @@ function dispatchEvent(element, event) {
 	if (element.dispatchEvent) {
 		element.dispatchEvent(event);
 	} else {
-		element.fireEvent(`on${event.eventType}`, event);
+		element.fireEvent(`on${event.type}`, event);
 	}
 }
 
@@ -25,7 +26,7 @@ const MOUSE_ACTION = {
 		dispatchEvent(element, new events.MouseEvent('mousedown', eventInits));
 	},
 	up(element, eventInits) {
-		dispatchEvent(element, new events.MouseEvent('mousedown', eventInits));
+		dispatchEvent(element, new events.MouseEvent('mouseup', eventInits));
 	},
 	click(element, eventInits) {
 		eventInits.button = 0;
@@ -39,6 +40,8 @@ const MOUSE_ACTION = {
 	dblclick(element, eventInits) {
 		this.click(element, eventInits);
 		this.click(element, eventInits);
+
+		dispatchEvent(element, new events.MouseEvent('dblclick', eventInits));
 	},
 	contextmenu(element, eventInits) {
 		eventInits.button = 2;

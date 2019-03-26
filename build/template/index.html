@@ -13,6 +13,14 @@
 </head>
 <body>
 	<input type="text">
+	<input type="checkbox" id="checkbox-unchecked" />
+	<input type="checkbox" checked="true" id="checkbox-checked" />
+	<input type="radio" id="radio-unchecked" />
+	<select id="native-select">
+		<option value="0">a</option>
+		<option value="1">b</option>
+		<option value="2">c</option>
+	</select>
 	<button onclick="openWindow()">open</button>
 	<button onclick="confirm('hello')" id="confirm">confirm</button>
 	<form method="post" action="/abc" enctype="multipart/form-data">
@@ -27,9 +35,33 @@
 		// setTimeout(() => win.close(), 5000);
 	}
 	
-	document.querySelector('input').onfocus = function () {
+	var input = document.querySelector('input');
+
+	input.onfocus = function () {
 		console.log(111111);
 	};
+
+	input.ondblclick = function () {
+		console.log('dblclick');
+	}
+
+	input.onclick = function () {
+		console.log('click');
+	}
+
+	input.oncontextmenu = function () {
+		console.log('oncontextmenu');
+	}
+
+	input.onmousedown = function () {
+		console.log('down');
+	}
+
+	input.onmouseup = function () {
+		console.log('up');
+	}
+
+	// document.addEventListener('click', console.log)
 
 	var upload = document.querySelector('#upload');
 	upload.addEventListener && upload.addEventListener('change', function () {
@@ -44,6 +76,22 @@
 
 			document.body.appendChild(img);
 		}
+	});
+
+	document.addEventListener('contextmenu', function () {
+		var div = document.createElement('div');
+		
+		div.id = 'for-contextmenu';
+
+		document.body.appendChild(div);
+	});
+
+	document.addEventListener('dblclick', function () {
+		var div = document.createElement('div');
+		
+		div.id = 'for-dblclick';
+
+		document.body.appendChild(div);
 	});
 	</script>
 </body>

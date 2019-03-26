@@ -41,7 +41,8 @@ pmc.on('frame.document.select', function ({ selector, textFilter }) {
 				e: id,
 				n: element.tagName,
 				t: element.type,
-				v: element.value
+				v: element.value,
+				c: element.checked
 			});
 		});
 		

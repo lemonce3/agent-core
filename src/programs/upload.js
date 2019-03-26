@@ -69,7 +69,7 @@ function createHiddenInput(element, fileNameList) {
 }
 
 function createChangeEvent() {
-	return new events.UIEvent('change', { bubbles: false, cancelable: true });
+	return new events.UIEvent('change', { bubbles: true, cancelable: false });
 }
 
 function MockFile(blob, name) {

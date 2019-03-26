@@ -5,6 +5,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>Document Root</title>
+	<style>
+		input:hover {
+			background: #ccc;
+		}
+	</style>
 </head>
 <body>
 	<input type="text">
@@ -27,7 +32,7 @@
 	};
 
 	var upload = document.querySelector('#upload');
-	upload.addEventListener('change', function () {
+	upload.addEventListener && upload.addEventListener('change', function () {
 		var file = upload.files.item(0);
 		var reader = new FileReader();
 		reader.readAsDataURL(file);

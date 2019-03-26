@@ -137,7 +137,7 @@ pmc.on('element.scroll', function ({ elementId }) {
 	return element && element.scrollIntoView();
 });
 
-agentWindow.program('document.element.scroll', function (elementProxy, value) {
+agentWindow.program('document.element.scroll', exports.scroll = function (elementProxy, value) {
 	const { f: frameId, e: elementId } = elementProxy;
 	const frameWindow = agentWindow.frameList[frameId];
 

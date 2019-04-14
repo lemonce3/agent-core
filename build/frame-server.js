@@ -46,3 +46,16 @@ createFrameServer(0, [1, 2], () => {
 		createFrameServer(6);
 	});
 });
+
+
+const formidable = require('formidable');
+
+http.createServer((req, res) => {
+	const form = new formidable.IncomingForm();
+
+	form.parse(req, (err, fields, files) => {
+		console.log(files);
+
+		res.end('ok');
+	});
+}).listen(config.uploadServer.port);

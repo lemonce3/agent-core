@@ -7,6 +7,9 @@
 		"startPort": 8000,
 		"host": "127.0.0.1"
 	},
+	"uploadServer": {
+		"port": 4500
+	},
 	"observer": {
 		"url": "http://localhost:8080"
 	}

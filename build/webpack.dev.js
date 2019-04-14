@@ -12,7 +12,8 @@ module.exports = merge(webpackBase, {
 		hot: false,
 		inline: false,
 		proxy: {
-			'/api': config.observer.url
+			'/api': config.observer.url,
+			'/upload': config.uploadServer.url
 		}
 	},
 	plugins: [

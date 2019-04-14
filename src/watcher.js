@@ -30,6 +30,8 @@ function watchProgram() {
 			agentWindow.nextTick(windowData => {
 				const { program } = windowData;
 
+				console.log(program, error, returnValue)
+
 				program.error = error;
 				program.returnValue = returnValue;
 				program.isExited = true;

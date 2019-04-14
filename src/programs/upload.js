@@ -19,7 +19,7 @@ if (utils.isIE8) {
 
 function setUploading(element = null) {
 	uploading.element = element;
-	uploading.form = element || element.form;
+	uploading.form = element && element.form;
 
 	return pmc.request(window.top, 'upload.state.update', !!element);
 }
@@ -58,12 +58,12 @@ function overrideUploadIE8() {
 	});
 }
 
-function createHiddenInput(element, fileNameList) {
+function createHiddenInput() {
 	const input = document.createElement('input');
 
 	input.setAttribute('type', 'hidden');
-	input.setAttribute('name', `_mock_${element.name}`);
-	input.value = fileNameList.toString();
+	input.setAttribute('name', '__file_mock__');
+	input.value = '{}';
 
 	return input;
 }
@@ -119,12 +119,17 @@ pmc.on('upload.file.onload', function (fileOptionList) {
 		throw new Error('No upload task pending.');
 	}
 	
-	const fileNameList = _.map(fileOptionList, function (options) {
-		return options.name;
-	});
+	if (uploading.form !== null && uploadElement.name) {
+		let mockInput = uploading.form.querySelector('input[type=hidden][name=__file_mock__]');
+		
+		if (!mockInput) {
+			uploading.form.appendChild(mockInput = createHiddenInput());
+		}
+
+		const map = JSON.parse(mockInput.value);
 	
-	if (uploading.form !== null) {
-		uploading.form.appendChild(createHiddenInput(uploadElement, fileNameList));
+		map[uploadElement.name] = fileOptionList;
+		mockInput.value = JSON.stringify(map);
 	}
 
 	if (isHTML5) {

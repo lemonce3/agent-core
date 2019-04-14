@@ -1,6 +1,6 @@
 {
   "name": "@lemonce3/agent-core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -43,6 +43,7 @@
   "dependencies": {
     "@lemonce3/event-constructor": "^1.0.0",
     "@lemonce3/pmc": "^0.2.0",
+    "formidable": "^1.2.1",
     "underscore": "1.7.0"
   }
 }

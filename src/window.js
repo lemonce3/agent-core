@@ -29,7 +29,7 @@ let nextTickList = [];
 function getAgentId() {
 	const iframe = document.createElement('iframe');
 	
-	iframe.src = '/api/agent.html';
+	iframe.src = `${window.__OBSERVER_URL__ || ''}/api/agent.html`;
 	iframe.width = 0;
 	iframe.height = 0;
 	

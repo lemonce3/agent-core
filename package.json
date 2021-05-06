@@ -44,6 +44,6 @@
     "@lemonce3/event-constructor": "^1.0.0",
     "@lemonce3/pmc": "^0.2.0",
     "formidable": "^1.2.1",
-    "underscore": "1.7.0"
+    "underscore": "1.12.1"
   }
 }

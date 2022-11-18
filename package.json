@@ -27,7 +27,7 @@
     "babel-preset-stage-0": "^6.24.1",
     "babel-runtime": "^6.26.0",
     "es6-template-strings": "^2.0.1",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "mocha": "^5.2.0",
     "promise-polyfill": "^8.1.0",
     "uglifyjs-webpack-plugin": "^1.1.1",
